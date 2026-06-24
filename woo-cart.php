@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Woo Cart
- * Description: A customizable WooCommerce floating cart drawer.
+ * Description: A professional WooCommerce floating cart drawer.
  * Version: 1.0.0
  * Author: sablu hasan
  * Author URI: https://sablu-hasan.vercel.app/
@@ -20,74 +20,58 @@ if (!class_exists('Woo_Cart_Plugin')) {
         public function __construct()
         {
             add_action('admin_menu', array($this, 'add_settings_page'));
-            add_action('admin_init', array($this, 'register_settings'));
+            add_action('admin_post_woo_cart_save_settings', array($this, 'save_settings'));
 
-            add_action('woocommerce_before_cart', array($this, 'render_cart_header'), 5);
-            add_action('wp_loaded', array($this, 'replace_woocommerce_buttons'));
-            add_filter('woocommerce_cart_item_thumbnail', array($this, 'maybe_hide_product_image'));
-
-            add_action('wp_head', array($this, 'print_dynamic_styles'));
-            add_action('wp_footer', array($this, 'render_floating_cart'));
+            add_action('wp_head', array($this, 'print_styles'));
+            add_action('wp_footer', array($this, 'render_cart_drawer'));
             add_filter('woocommerce_add_to_cart_fragments', array($this, 'update_cart_fragments'));
         }
 
-        public function default_settings()
+        private function defaults()
         {
             return array(
-                'cart_title' => 'Your Cart',
-                'cart_description' => 'Review your selected products before checkout.',
-                'show_product_image' => '1',
-                'product_image_radius' => '8',
-                'cart_radius' => '8',
-                'button_radius' => '6',
-                'view_cart_text' => 'View cart',
+                'show_cart' => '1',
+                'drawer_title' => 'Your Cart',
+                'empty_text' => 'Your cart is empty.',
+                'view_cart_text' => 'View Cart',
                 'checkout_text' => 'Checkout',
-                'show_floating_cart' => '1',
-                'drawer_title' => 'Shopping Cart',
-                'floating_icon_bg_color' => '#1d4ed8',
-                'floating_icon_color' => '#ffffff',
-                'badge_bg_color' => '#ef4444',
-                'button_bg_color' => '#111827',
-                'button_text_color' => '#ffffff',
-                'cart_bg_color' => '#ffffff',
+                'icon_bg_color' => '#111111',
+                'icon_text_color' => '#ffffff',
+                'badge_bg_color' => '#111111',
                 'drawer_bg_color' => '#f6f6f4',
-                'drawer_text_color' => '#111827',
-                'drawer_overlay_color' => '#000000',
+                'drawer_text_color' => '#111111',
+                'button_bg_color' => '#111111',
+                'button_text_color' => '#ffffff',
+                'overlay_color' => '#000000',
             );
         }
 
-        public function get_settings()
+        private function settings()
         {
             return wp_parse_args(
                 get_option(self::OPTION_KEY, array()),
-                $this->default_settings()
+                $this->defaults()
             );
         }
 
-        public function sanitize_settings($input)
+        private function sanitize_settings($input)
         {
-            $defaults = $this->default_settings();
+            $defaults = $this->defaults();
 
             return array(
-                'cart_title' => sanitize_text_field($input['cart_title'] ?? $defaults['cart_title']),
-                'cart_description' => sanitize_textarea_field($input['cart_description'] ?? $defaults['cart_description']),
-                'show_product_image' => !empty($input['show_product_image']) ? '1' : '0',
-                'product_image_radius' => absint($input['product_image_radius'] ?? $defaults['product_image_radius']),
-                'cart_radius' => absint($input['cart_radius'] ?? $defaults['cart_radius']),
-                'button_radius' => absint($input['button_radius'] ?? $defaults['button_radius']),
+                'show_cart' => !empty($input['show_cart']) ? '1' : '0',
+                'drawer_title' => sanitize_text_field($input['drawer_title'] ?? $defaults['drawer_title']),
+                'empty_text' => sanitize_text_field($input['empty_text'] ?? $defaults['empty_text']),
                 'view_cart_text' => sanitize_text_field($input['view_cart_text'] ?? $defaults['view_cart_text']),
                 'checkout_text' => sanitize_text_field($input['checkout_text'] ?? $defaults['checkout_text']),
-                'show_floating_cart' => !empty($input['show_floating_cart']) ? '1' : '0',
-                'drawer_title' => sanitize_text_field($input['drawer_title'] ?? $defaults['drawer_title']),
-                'floating_icon_bg_color' => sanitize_hex_color($input['floating_icon_bg_color'] ?? $defaults['floating_icon_bg_color']) ?: $defaults['floating_icon_bg_color'],
-                'floating_icon_color' => sanitize_hex_color($input['floating_icon_color'] ?? $defaults['floating_icon_color']) ?: $defaults['floating_icon_color'],
+                'icon_bg_color' => sanitize_hex_color($input['icon_bg_color'] ?? $defaults['icon_bg_color']) ?: $defaults['icon_bg_color'],
+                'icon_text_color' => sanitize_hex_color($input['icon_text_color'] ?? $defaults['icon_text_color']) ?: $defaults['icon_text_color'],
                 'badge_bg_color' => sanitize_hex_color($input['badge_bg_color'] ?? $defaults['badge_bg_color']) ?: $defaults['badge_bg_color'],
-                'button_bg_color' => sanitize_hex_color($input['button_bg_color'] ?? $defaults['button_bg_color']) ?: $defaults['button_bg_color'],
-                'button_text_color' => sanitize_hex_color($input['button_text_color'] ?? $defaults['button_text_color']) ?: $defaults['button_text_color'],
-                'cart_bg_color' => sanitize_hex_color($input['cart_bg_color'] ?? $defaults['cart_bg_color']) ?: $defaults['cart_bg_color'],
                 'drawer_bg_color' => sanitize_hex_color($input['drawer_bg_color'] ?? $defaults['drawer_bg_color']) ?: $defaults['drawer_bg_color'],
                 'drawer_text_color' => sanitize_hex_color($input['drawer_text_color'] ?? $defaults['drawer_text_color']) ?: $defaults['drawer_text_color'],
-                'drawer_overlay_color' => sanitize_hex_color($input['drawer_overlay_color'] ?? $defaults['drawer_overlay_color']) ?: $defaults['drawer_overlay_color'],
+                'button_bg_color' => sanitize_hex_color($input['button_bg_color'] ?? $defaults['button_bg_color']) ?: $defaults['button_bg_color'],
+                'button_text_color' => sanitize_hex_color($input['button_text_color'] ?? $defaults['button_text_color']) ?: $defaults['button_text_color'],
+                'overlay_color' => sanitize_hex_color($input['overlay_color'] ?? $defaults['overlay_color']) ?: $defaults['overlay_color'],
             );
         }
 
@@ -104,9 +88,30 @@ if (!class_exists('Woo_Cart_Plugin')) {
             );
         }
 
-        public function register_settings()
+        public function save_settings()
         {
-            register_setting('woo_cart_settings_group', self::OPTION_KEY, array($this, 'sanitize_settings'));
+            if (!current_user_can('manage_options')) {
+                wp_die(esc_html__('You do not have permission to save these settings.', 'woo-cart'));
+            }
+
+            check_admin_referer('woo_cart_save_settings', 'woo_cart_nonce');
+
+            $raw_settings = isset($_POST[self::OPTION_KEY])
+                ? wp_unslash($_POST[self::OPTION_KEY])
+                : array();
+
+            update_option(self::OPTION_KEY, $this->sanitize_settings($raw_settings));
+
+            wp_safe_redirect(
+                add_query_arg(
+                    array(
+                        'page' => 'woo-cart-settings',
+                        'settings-updated' => 'true',
+                    ),
+                    admin_url('admin.php')
+                )
+            );
+            exit;
         }
 
         public function render_settings_page()
@@ -115,37 +120,38 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 return;
             }
 
-            $settings = $this->get_settings();
+            $settings = $this->settings();
             ?>
             <div class="wrap">
                 <h1><?php esc_html_e('Woo Cart Settings', 'woo-cart'); ?></h1>
 
-                <form method="post" action="options.php">
-                    <?php settings_fields('woo_cart_settings_group'); ?>
+                <?php if (isset($_GET['settings-updated'])) : ?>
+                    <div class="notice notice-success is-dismissible">
+                        <p><?php esc_html_e('Settings saved.', 'woo-cart'); ?></p>
+                    </div>
+                <?php endif; ?>
+
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="woo_cart_save_settings">
+                    <?php wp_nonce_field('woo_cart_save_settings', 'woo_cart_nonce'); ?>
 
                     <table class="form-table" role="presentation">
-                        <?php $this->text_field('cart_title', __('Cart title', 'woo-cart'), $settings['cart_title']); ?>
-                        <?php $this->textarea_field('cart_description', __('Description', 'woo-cart'), $settings['cart_description']); ?>
-                        <?php $this->checkbox_field('show_product_image', __('Product image', 'woo-cart'), __('Show product images', 'woo-cart'), $settings['show_product_image']); ?>
-                        <?php $this->number_field('product_image_radius', __('Product image radius', 'woo-cart'), $settings['product_image_radius']); ?>
-                        <?php $this->number_field('cart_radius', __('Cart box radius', 'woo-cart'), $settings['cart_radius']); ?>
-                        <?php $this->number_field('button_radius', __('Button radius', 'woo-cart'), $settings['button_radius']); ?>
-                        <?php $this->text_field('view_cart_text', __('View cart button text', 'woo-cart'), $settings['view_cart_text']); ?>
-                        <?php $this->text_field('checkout_text', __('Checkout button text', 'woo-cart'), $settings['checkout_text']); ?>
-                        <?php $this->checkbox_field('show_floating_cart', __('Floating cart icon', 'woo-cart'), __('Show right-bottom cart icon on frontend', 'woo-cart'), $settings['show_floating_cart']); ?>
+                        <?php $this->checkbox_field('show_cart', __('Floating cart drawer', 'woo-cart'), __('Show cart drawer on frontend', 'woo-cart'), $settings['show_cart']); ?>
                         <?php $this->text_field('drawer_title', __('Drawer title', 'woo-cart'), $settings['drawer_title']); ?>
-                        <?php $this->color_field('floating_icon_bg_color', __('Floating icon background', 'woo-cart'), $settings['floating_icon_bg_color']); ?>
-                        <?php $this->color_field('floating_icon_color', __('Floating icon color', 'woo-cart'), $settings['floating_icon_color']); ?>
+                        <?php $this->text_field('empty_text', __('Empty cart text', 'woo-cart'), $settings['empty_text']); ?>
+                        <?php $this->text_field('view_cart_text', __('View cart text', 'woo-cart'), $settings['view_cart_text']); ?>
+                        <?php $this->text_field('checkout_text', __('Checkout text', 'woo-cart'), $settings['checkout_text']); ?>
+                        <?php $this->color_field('icon_bg_color', __('Floating icon background', 'woo-cart'), $settings['icon_bg_color']); ?>
+                        <?php $this->color_field('icon_text_color', __('Floating icon color', 'woo-cart'), $settings['icon_text_color']); ?>
                         <?php $this->color_field('badge_bg_color', __('Cart count badge color', 'woo-cart'), $settings['badge_bg_color']); ?>
-                        <?php $this->color_field('button_bg_color', __('Button background color', 'woo-cart'), $settings['button_bg_color']); ?>
-                        <?php $this->color_field('button_text_color', __('Button text color', 'woo-cart'), $settings['button_text_color']); ?>
-                        <?php $this->color_field('cart_bg_color', __('Cart background color', 'woo-cart'), $settings['cart_bg_color']); ?>
                         <?php $this->color_field('drawer_bg_color', __('Drawer background color', 'woo-cart'), $settings['drawer_bg_color']); ?>
                         <?php $this->color_field('drawer_text_color', __('Drawer text color', 'woo-cart'), $settings['drawer_text_color']); ?>
-                        <?php $this->color_field('drawer_overlay_color', __('Drawer overlay color', 'woo-cart'), $settings['drawer_overlay_color']); ?>
+                        <?php $this->color_field('button_bg_color', __('Button background color', 'woo-cart'), $settings['button_bg_color']); ?>
+                        <?php $this->color_field('button_text_color', __('Button text color', 'woo-cart'), $settings['button_text_color']); ?>
+                        <?php $this->color_field('overlay_color', __('Overlay color', 'woo-cart'), $settings['overlay_color']); ?>
                     </table>
 
-                    <?php submit_button(); ?>
+                    <?php submit_button(__('Save Changes', 'woo-cart')); ?>
                 </form>
             </div>
             <?php
@@ -160,21 +166,11 @@ if (!class_exists('Woo_Cart_Plugin')) {
         {
             ?>
             <tr>
-                <th scope="row"><label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label></th>
+                <th scope="row">
+                    <label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label>
+                </th>
                 <td>
-                    <input type="text" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>" class="regular-text">
-                </td>
-            </tr>
-            <?php
-        }
-
-        private function textarea_field($key, $label, $value)
-        {
-            ?>
-            <tr>
-                <th scope="row"><label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label></th>
-                <td>
-                    <textarea id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" rows="3" class="large-text"><?php echo esc_textarea($value); ?></textarea>
+                    <input class="regular-text" type="text" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>">
                 </td>
             </tr>
             <?php
@@ -195,23 +191,13 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <?php
         }
 
-        private function number_field($key, $label, $value)
-        {
-            ?>
-            <tr>
-                <th scope="row"><label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label></th>
-                <td>
-                    <input type="number" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>" min="0" max="80"> px
-                </td>
-            </tr>
-            <?php
-        }
-
         private function color_field($key, $label, $value)
         {
             ?>
             <tr>
-                <th scope="row"><label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label></th>
+                <th scope="row">
+                    <label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label>
+                </th>
                 <td>
                     <input type="color" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>">
                 </td>
@@ -219,157 +205,60 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <?php
         }
 
-        public function render_cart_header()
+        private function can_render_cart()
         {
-            $settings = $this->get_settings();
+            $settings = $this->settings();
 
-            if (empty($settings['cart_title']) && empty($settings['cart_description'])) {
-                return;
-            }
-            ?>
-            <div class="woo-cart-header">
-                <?php if (!empty($settings['cart_title'])) : ?>
-                    <h2><?php echo esc_html($settings['cart_title']); ?></h2>
-                <?php endif; ?>
-
-                <?php if (!empty($settings['cart_description'])) : ?>
-                    <p><?php echo esc_html($settings['cart_description']); ?></p>
-                <?php endif; ?>
-            </div>
-            <?php
+            return class_exists('WooCommerce') && $settings['show_cart'] === '1';
         }
 
-        public function replace_woocommerce_buttons()
+        public function print_styles()
         {
-            remove_action('woocommerce_proceed_to_checkout', 'woocommerce_button_proceed_to_checkout', 20);
-            add_action('woocommerce_proceed_to_checkout', array($this, 'render_checkout_button'), 20);
-
-            remove_action('woocommerce_widget_shopping_cart_buttons', 'woocommerce_widget_shopping_cart_button_view_cart', 10);
-            remove_action('woocommerce_widget_shopping_cart_buttons', 'woocommerce_widget_shopping_cart_proceed_to_checkout', 20);
-            add_action('woocommerce_widget_shopping_cart_buttons', array($this, 'render_mini_cart_buttons'), 10);
-        }
-
-        public function render_checkout_button()
-        {
-            $settings = $this->get_settings();
-            ?>
-            <a href="<?php echo esc_url(wc_get_checkout_url()); ?>" class="checkout-button button alt wc-forward">
-                <?php echo esc_html($settings['checkout_text']); ?>
-            </a>
-            <?php
-        }
-
-        public function render_mini_cart_buttons()
-        {
-            $settings = $this->get_settings();
-            ?>
-            <a href="<?php echo esc_url(wc_get_cart_url()); ?>" class="button wc-forward">
-                <?php echo esc_html($settings['view_cart_text']); ?>
-            </a>
-            <a href="<?php echo esc_url(wc_get_checkout_url()); ?>" class="button checkout wc-forward">
-                <?php echo esc_html($settings['checkout_text']); ?>
-            </a>
-            <?php
-        }
-
-        public function maybe_hide_product_image($thumbnail)
-        {
-            $settings = $this->get_settings();
-
-            return $settings['show_product_image'] === '0' ? '' : $thumbnail;
-        }
-
-        public function print_dynamic_styles()
-        {
-            if (!class_exists('WooCommerce')) {
+            if (!$this->can_render_cart()) {
                 return;
             }
 
-            $settings = $this->get_settings();
+            $settings = $this->settings();
             ?>
-            <style id="woo-cart-dynamic-styles">
-                .woocommerce-cart .woocommerce,
-                .woocommerce-cart .cart-collaterals,
-                .woo-cart-header {
-                    background: <?php echo esc_html($settings['cart_bg_color']); ?>;
-                    border-radius: <?php echo absint($settings['cart_radius']); ?>px;
-                }
-
-                .woo-cart-header {
-                    margin-bottom: 20px;
-                    padding: 18px 20px;
-                }
-
-                .woo-cart-header h2 {
-                    margin: 0 0 6px;
-                }
-
-                .woo-cart-header p {
-                    margin: 0;
-                }
-
-                .woocommerce-cart table.cart img,
-                .woocommerce-mini-cart-item img {
-                    border-radius: <?php echo absint($settings['product_image_radius']); ?>px;
-                }
-
-                .woocommerce a.button,
-                .woocommerce button.button,
-                .woocommerce input.button,
-                .woocommerce #respond input#submit,
-                .woocommerce a.checkout-button {
-                    background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
-                    border-radius: <?php echo absint($settings['button_radius']); ?>px;
-                    color: <?php echo esc_html($settings['button_text_color']); ?>;
-                }
-
-                .woocommerce a.button:hover,
-                .woocommerce button.button:hover,
-                .woocommerce input.button:hover,
-                .woocommerce #respond input#submit:hover,
-                .woocommerce a.checkout-button:hover {
-                    background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
-                    color: <?php echo esc_html($settings['button_text_color']); ?>;
-                    opacity: 0.9;
+            <style id="woo-cart-styles">
+                .woo-cart-floating-button,
+                .woo-cart-drawer,
+                .woo-cart-drawer * {
+                    box-sizing: border-box;
+                    letter-spacing: 0;
                 }
 
                 .woo-cart-floating-button {
                     align-items: center;
-                    background: linear-gradient(145deg, <?php echo esc_html($settings['floating_icon_bg_color']); ?>, <?php echo esc_html($settings['button_bg_color']); ?>);
-                    border: 1px solid rgba(255, 255, 255, 0.22);
-                    border-radius: 18px;
+                    background: <?php echo esc_html($settings['icon_bg_color']); ?>;
+                    border: 0;
+                    border-radius: 16px;
                     bottom: 24px;
-                    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.28);
-                    color: <?php echo esc_html($settings['floating_icon_color']); ?>;
+                    box-shadow: 0 18px 40px rgba(17, 24, 39, 0.28);
+                    color: <?php echo esc_html($settings['icon_text_color']); ?>;
                     cursor: pointer;
                     display: flex;
                     height: 58px;
                     justify-content: center;
                     position: fixed;
                     right: 24px;
-                    text-decoration: none;
-                    transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+                    transition: transform 180ms ease, box-shadow 180ms ease;
                     width: 58px;
                     z-index: 99999;
                 }
 
                 .woo-cart-floating-button:hover,
                 .woo-cart-floating-button:focus {
-                    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.34);
-                    color: <?php echo esc_html($settings['floating_icon_color']); ?>;
-                    opacity: 1;
+                    box-shadow: 0 22px 48px rgba(17, 24, 39, 0.34);
+                    color: <?php echo esc_html($settings['icon_text_color']); ?>;
                     outline: none;
-                    transform: translateY(-3px) scale(1.02);
+                    transform: translateY(-2px);
                 }
 
                 .woo-cart-floating-button svg {
                     display: block;
-                    height: 28px;
-                    width: 28px;
-                }
-
-                .woo-cart-floating-button svg path {
-                    stroke: currentColor;
+                    height: 27px;
+                    width: 27px;
                 }
 
                 .woo-cart-floating-count {
@@ -377,23 +266,22 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     background: <?php echo esc_html($settings['badge_bg_color']); ?>;
                     border: 2px solid #ffffff;
                     border-radius: 999px;
-                    box-shadow: 0 8px 16px rgba(239, 68, 68, 0.32);
+                    box-shadow: 0 8px 14px rgba(17, 24, 39, 0.18);
                     color: #ffffff;
                     display: flex;
                     font-size: 12px;
-                    font-weight: 700;
+                    font-weight: 800;
                     height: 24px;
                     justify-content: center;
-                    line-height: 1;
                     min-width: 24px;
-                    padding: 0 6px;
+                    padding: 0 7px;
                     position: absolute;
                     right: -7px;
                     top: -9px;
                 }
 
                 .woo-cart-drawer-overlay {
-                    background: <?php echo esc_html($settings['drawer_overlay_color']); ?>;
+                    background: <?php echo esc_html($settings['overlay_color']); ?>;
                     bottom: 0;
                     left: 0;
                     opacity: 0;
@@ -405,30 +293,30 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     z-index: 99998;
                 }
 
+                .woo-cart-drawer-overlay.is-open {
+                    opacity: 0.58;
+                    pointer-events: auto;
+                }
+
                 .woo-cart-drawer {
                     background: <?php echo esc_html($settings['drawer_bg_color']); ?>;
                     bottom: 0;
-                    box-shadow: -22px 0 52px rgba(15, 23, 42, 0.2);
+                    box-shadow: -24px 0 60px rgba(17, 24, 39, 0.18);
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     display: flex;
                     flex-direction: column;
-                    max-width: min(440px, 92vw);
+                    max-width: min(446px, 92vw);
                     position: fixed;
                     right: 0;
                     top: 0;
                     transform: translateX(105%);
                     transition: transform 260ms ease;
-                    width: 440px;
+                    width: 446px;
                     z-index: 99999;
                 }
 
                 .woo-cart-drawer.is-open {
                     transform: translateX(0);
-                }
-
-                .woo-cart-drawer-overlay.is-open {
-                    opacity: 0.45;
-                    pointer-events: auto;
                 }
 
                 body.woo-cart-drawer-open {
@@ -437,20 +325,22 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-header {
                     align-items: center;
-                    border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+                    background: #ffffff;
                     display: flex;
                     justify-content: space-between;
-                    min-height: 72px;
-                    padding: 20px 24px;
+                    min-height: 74px;
+                    padding: 20px 22px;
                 }
 
                 .woo-cart-drawer-heading {
                     align-items: center;
                     display: flex;
                     gap: 10px;
+                    min-width: 0;
                 }
 
                 .woo-cart-drawer-heading svg {
+                    flex: 0 0 auto;
                     height: 22px;
                     width: 22px;
                 }
@@ -458,8 +348,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-drawer-title {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     font-size: 16px;
-                    font-weight: 700;
-                    letter-spacing: 0;
+                    font-weight: 800;
                     line-height: 1.2;
                     margin: 0;
                 }
@@ -471,7 +360,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     color: #ffffff;
                     display: inline-flex;
                     font-size: 11px;
-                    font-weight: 700;
+                    font-weight: 800;
                     height: 22px;
                     justify-content: center;
                     min-width: 22px;
@@ -480,9 +369,9 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-close {
                     align-items: center;
-                    background: transparent;
-                    border: 0;
-                    border-radius: 10px;
+                    background: #ffffff;
+                    border: 1px solid rgba(17, 24, 39, 0.08);
+                    border-radius: 999px;
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     cursor: pointer;
                     display: flex;
@@ -495,32 +384,19 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-close:hover,
                 .woo-cart-drawer-close:focus {
-                    background: rgba(148, 163, 184, 0.14);
+                    background: #f4f4f1;
                     outline: none;
-                }
-
-                .woo-cart-drawer-close svg {
-                    height: 22px;
-                    width: 22px;
                 }
 
                 .woo-cart-drawer-content {
                     flex: 1;
                     overflow-y: auto;
-                    padding: 14px 18px 24px;
-                }
-
-                .woo-cart-drawer-content,
-                .woo-cart-drawer-content a,
-                .woo-cart-drawer-content .woocommerce-mini-cart__total {
-                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+                    padding: 14px 18px 18px;
                 }
 
                 .woo-cart-drawer-list {
                     display: grid;
                     gap: 14px;
-                    margin: 0;
-                    padding: 0;
                 }
 
                 .woo-cart-drawer-item {
@@ -528,13 +404,11 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     background: #ffffff;
                     border: 1px solid rgba(17, 24, 39, 0.06);
                     border-radius: 18px;
-                    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+                    box-shadow: 0 10px 24px rgba(17, 24, 39, 0.04);
                     display: grid;
                     gap: 14px;
                     grid-template-columns: 84px minmax(0, 1fr) auto;
-                    list-style: none;
-                    margin: 0;
-                    min-height: 96px;
+                    min-height: 98px;
                     padding: 12px;
                     position: relative;
                 }
@@ -542,7 +416,6 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-item-thumb {
                     align-items: center;
                     background: #f7f7f5;
-                    border: 1px solid rgba(17, 24, 39, 0.06);
                     border-radius: 14px;
                     display: flex;
                     height: 84px;
@@ -560,77 +433,61 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-item-main {
                     min-width: 0;
+                    padding-right: 20px;
                 }
 
                 .woo-cart-item-title {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     display: block;
                     font-size: 14px;
-                    font-weight: 700;
-                    line-height: 1.3;
+                    font-weight: 800;
+                    line-height: 1.35;
                     text-decoration: none;
                 }
 
                 .woo-cart-item-title:hover {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
-                    opacity: 0.75;
+                    opacity: 0.72;
                 }
 
-                .woo-cart-item-quantity {
+                .woo-cart-item-meta {
                     align-items: center;
-                    display: inline-flex;
+                    display: flex;
                     gap: 8px;
                     margin-top: 12px;
                 }
 
-                .woo-cart-qty-pill {
+                .woo-cart-qty {
                     align-items: center;
                     background: #f4f4f1;
                     border-radius: 999px;
-                    color: #111827;
+                    color: #111111;
                     display: inline-flex;
                     font-size: 13px;
-                    font-weight: 700;
+                    font-weight: 800;
                     height: 28px;
                     justify-content: center;
-                    min-width: 28px;
-                    padding: 0 10px;
-                }
-
-                .woo-cart-qty-button {
-                    align-items: center;
-                    background: #f4f4f1;
-                    border: 0;
-                    border-radius: 999px;
-                    color: #111827;
-                    display: inline-flex;
-                    font-size: 14px;
-                    font-weight: 700;
-                    height: 28px;
-                    justify-content: center;
-                    line-height: 1;
-                    width: 28px;
+                    min-width: 38px;
+                    padding: 0 12px;
                 }
 
                 .woo-cart-item-price {
                     align-self: end;
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     font-size: 14px;
-                    font-weight: 800;
+                    font-weight: 900;
                     justify-self: end;
                     white-space: nowrap;
                 }
 
-                .woo-cart-drawer-content .remove,
-                .woo-cart-drawer-content a.remove,
                 .woo-cart-item-remove {
                     align-items: center;
                     background: #050505;
                     border-radius: 999px;
                     color: #ffffff !important;
                     display: flex;
-                    font-size: 16px;
-                    font-weight: 700;
+                    font-size: 15px;
+                    font-weight: 800;
                     height: 26px;
                     justify-content: center;
                     line-height: 1;
@@ -641,8 +498,6 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     width: 26px;
                 }
 
-                .woo-cart-drawer-content .remove:hover,
-                .woo-cart-drawer-content a.remove:hover,
                 .woo-cart-item-remove:hover {
                     background: <?php echo esc_html($settings['badge_bg_color']); ?>;
                     color: #ffffff !important;
@@ -664,11 +519,6 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     margin: 0;
                 }
 
-                .woo-cart-drawer-total strong,
-                .woo-cart-drawer-total span {
-                    font-weight: 700;
-                }
-
                 .woo-cart-drawer-actions {
                     display: grid;
                     gap: 10px;
@@ -676,15 +526,14 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 }
 
                 .woo-cart-drawer-button {
-                    background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
-                    border-radius: <?php echo absint($settings['button_radius']); ?>px;
-                    box-shadow: none;
+                    background: <?php echo esc_html($settings['button_bg_color']); ?>;
+                    border: 1px solid <?php echo esc_html($settings['button_bg_color']); ?>;
+                    border-radius: 999px;
                     color: <?php echo esc_html($settings['button_text_color']); ?>;
                     display: block;
                     font-size: 14px;
-                    font-weight: 700;
-                    line-height: 1.2;
-                    min-height: 46px;
+                    font-weight: 800;
+                    min-height: 48px;
                     padding: 15px 18px;
                     text-align: center;
                     text-decoration: none;
@@ -702,15 +551,14 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-button.is-secondary {
                     background: #ffffff;
-                    border: 1px solid rgba(17, 24, 39, 0.12);
+                    border-color: rgba(17, 24, 39, 0.12);
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                 }
 
                 .woo-cart-drawer-empty {
                     background: #ffffff;
-                    border: 1px dashed rgba(17, 24, 39, 0.16);
+                    border: 1px dashed rgba(17, 24, 39, 0.18);
                     border-radius: 18px;
-                    margin: 0;
                     padding: 34px 22px;
                     text-align: center;
                 }
@@ -721,7 +569,6 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 @media (max-width: 782px) {
                     .woo-cart-floating-button {
-                        border-radius: 16px;
                         bottom: 18px;
                         height: 54px;
                         right: 18px;
@@ -745,64 +592,48 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     .woo-cart-item-price {
                         grid-column: 2;
                         justify-self: start;
-                        margin-top: 8px;
                     }
                 }
             </style>
             <?php
         }
 
-        public function render_floating_cart()
+        public function render_cart_drawer()
         {
-            if (!$this->can_show_floating_cart()) {
+            if (!$this->can_render_cart()) {
                 return;
             }
 
-            echo $this->get_floating_cart_markup();
-            echo $this->get_cart_drawer_markup();
-            $this->print_drawer_script();
+            echo $this->floating_button_markup();
+            echo $this->drawer_markup();
+            $this->print_script();
         }
 
         public function update_cart_fragments($fragments)
         {
-            if (!$this->can_show_floating_cart()) {
+            if (!$this->can_render_cart()) {
                 return $fragments;
             }
 
-            $fragments['.woo-cart-floating-button'] = $this->get_floating_cart_markup();
-            $fragments['.woo-cart-drawer-count'] = $this->get_cart_count_markup();
-            $fragments['.woo-cart-drawer-content'] = $this->get_cart_drawer_content_markup();
+            $fragments['.woo-cart-floating-button'] = $this->floating_button_markup();
+            $fragments['.woo-cart-drawer-count'] = $this->cart_count_markup();
+            $fragments['.woo-cart-drawer-content'] = $this->drawer_content_markup();
 
             return $fragments;
         }
 
-        private function can_show_floating_cart()
+        private function floating_button_markup()
         {
-            if (!class_exists('WooCommerce')) {
-                return false;
-            }
-
-            $settings = $this->get_settings();
-
-            return $settings['show_floating_cart'] === '1';
-        }
-
-        private function get_floating_cart_markup()
-        {
-            if (!function_exists('WC') || !WC()->cart) {
-                return '';
-            }
-
-            $cart_count = $this->get_cart_count();
-            $cart_label = sprintf(
-                _n('%d item in cart', '%d items in cart', $cart_count, 'woo-cart'),
-                $cart_count
+            $count = $this->cart_count();
+            $label = sprintf(
+                _n('%d item in cart', '%d items in cart', $count, 'woo-cart'),
+                $count
             );
 
             ob_start();
             ?>
-            <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($cart_label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
-                <span class="woo-cart-floating-count"><?php echo esc_html($cart_count); ?></span>
+            <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
+                <span class="woo-cart-floating-count"><?php echo esc_html($count); ?></span>
                 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
                     <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                     <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -813,9 +644,9 @@ if (!class_exists('Woo_Cart_Plugin')) {
             return ob_get_clean();
         }
 
-        private function get_cart_drawer_markup()
+        private function drawer_markup()
         {
-            $settings = $this->get_settings();
+            $settings = $this->settings();
 
             ob_start();
             ?>
@@ -828,7 +659,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                             <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                         </svg>
                         <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
-                        <?php echo $this->get_cart_count_markup(); ?>
+                        <?php echo $this->cart_count_markup(); ?>
                     </div>
                     <button class="woo-cart-drawer-close" type="button" aria-label="<?php esc_attr_e('Close cart', 'woo-cart'); ?>" data-woo-cart-close>
                         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
@@ -836,72 +667,29 @@ if (!class_exists('Woo_Cart_Plugin')) {
                         </svg>
                     </button>
                 </div>
-                <?php echo $this->get_cart_drawer_content_markup(); ?>
+                <?php echo $this->drawer_content_markup(); ?>
             </aside>
             <?php
 
             return ob_get_clean();
         }
 
-        private function get_cart_drawer_content_markup()
+        private function drawer_content_markup()
         {
-            if (!function_exists('WC') || !WC()->cart) {
-                return '';
-            }
-
-            $settings = $this->get_settings();
-            $cart_items = WC()->cart->get_cart();
+            $settings = $this->settings();
+            $items = $this->cart_items();
 
             ob_start();
             ?>
             <div class="woo-cart-drawer-content">
-                <?php if (empty($cart_items)) : ?>
+                <?php if (empty($items)) : ?>
                     <div class="woo-cart-drawer-empty">
-                        <p><?php esc_html_e('Your cart is empty.', 'woo-cart'); ?></p>
+                        <p><?php echo esc_html($settings['empty_text']); ?></p>
                     </div>
                 <?php else : ?>
                     <div class="woo-cart-drawer-list">
-                        <?php foreach ($cart_items as $cart_item_key => $cart_item) : ?>
-                            <?php
-                            $product = $cart_item['data'];
-
-                            if (!$product || !$product->exists() || $cart_item['quantity'] <= 0) {
-                                continue;
-                            }
-
-                            $product_name = $product->get_name();
-                            $product_permalink = $product->is_visible() ? $product->get_permalink($cart_item) : '';
-                            $product_image = $product->get_image('woocommerce_thumbnail');
-                            $line_price = WC()->cart->get_product_subtotal($product, $cart_item['quantity']);
-                            ?>
-                            <div class="woo-cart-drawer-item">
-                                <a class="woo-cart-item-thumb" href="<?php echo esc_url($product_permalink ?: wc_get_cart_url()); ?>">
-                                    <?php echo wp_kses_post($product_image); ?>
-                                </a>
-
-                                <div class="woo-cart-item-main">
-                                    <a class="woo-cart-item-title" href="<?php echo esc_url($product_permalink ?: wc_get_cart_url()); ?>">
-                                        <?php echo esc_html($product_name); ?>
-                                    </a>
-
-                                    <div class="woo-cart-item-quantity" aria-label="<?php esc_attr_e('Quantity', 'woo-cart'); ?>">
-                                        <span class="woo-cart-qty-button" aria-hidden="true">-</span>
-                                        <span class="woo-cart-qty-pill"><?php echo esc_html($cart_item['quantity']); ?></span>
-                                        <span class="woo-cart-qty-button" aria-hidden="true">+</span>
-                                    </div>
-                                </div>
-
-                                <div class="woo-cart-item-price"><?php echo wp_kses_post($line_price); ?></div>
-
-                                <a
-                                    class="woo-cart-item-remove"
-                                    href="<?php echo esc_url(wc_get_cart_remove_url($cart_item_key)); ?>"
-                                    aria-label="<?php echo esc_attr(sprintf(__('Remove %s from cart', 'woo-cart'), $product_name)); ?>"
-                                    data-product_id="<?php echo esc_attr($product->get_id()); ?>"
-                                    data-cart_item_key="<?php echo esc_attr($cart_item_key); ?>"
-                                    data-product_sku="<?php echo esc_attr($product->get_sku()); ?>"
-                                >&times;</a>
-                            </div>
+                        <?php foreach ($items as $cart_item_key => $cart_item) : ?>
+                            <?php echo $this->cart_item_markup($cart_item_key, $cart_item); ?>
                         <?php endforeach; ?>
                     </div>
 
@@ -927,7 +715,61 @@ if (!class_exists('Woo_Cart_Plugin')) {
             return ob_get_clean();
         }
 
-        private function get_cart_count()
+        private function cart_item_markup($cart_item_key, $cart_item)
+        {
+            $product = $cart_item['data'];
+
+            if (!$product || !$product->exists() || $cart_item['quantity'] <= 0) {
+                return '';
+            }
+
+            $product_name = $product->get_name();
+            $product_url = $product->is_visible() ? $product->get_permalink($cart_item) : wc_get_cart_url();
+            $product_image = $product->get_image('woocommerce_thumbnail');
+            $line_price = WC()->cart->get_product_subtotal($product, $cart_item['quantity']);
+
+            ob_start();
+            ?>
+            <div class="woo-cart-drawer-item">
+                <a class="woo-cart-item-thumb" href="<?php echo esc_url($product_url); ?>">
+                    <?php echo wp_kses_post($product_image); ?>
+                </a>
+
+                <div class="woo-cart-item-main">
+                    <a class="woo-cart-item-title" href="<?php echo esc_url($product_url); ?>">
+                        <?php echo esc_html($product_name); ?>
+                    </a>
+                    <div class="woo-cart-item-meta">
+                        <span class="woo-cart-qty"><?php echo esc_html($cart_item['quantity']); ?></span>
+                    </div>
+                </div>
+
+                <div class="woo-cart-item-price"><?php echo wp_kses_post($line_price); ?></div>
+
+                <a
+                    class="woo-cart-item-remove remove remove_from_cart_button"
+                    href="<?php echo esc_url(wc_get_cart_remove_url($cart_item_key)); ?>"
+                    aria-label="<?php echo esc_attr(sprintf(__('Remove %s from cart', 'woo-cart'), $product_name)); ?>"
+                    data-product_id="<?php echo esc_attr($product->get_id()); ?>"
+                    data-cart_item_key="<?php echo esc_attr($cart_item_key); ?>"
+                    data-product_sku="<?php echo esc_attr($product->get_sku()); ?>"
+                >&times;</a>
+            </div>
+            <?php
+
+            return ob_get_clean();
+        }
+
+        private function cart_items()
+        {
+            if (!function_exists('WC') || !WC()->cart) {
+                return array();
+            }
+
+            return WC()->cart->get_cart();
+        }
+
+        private function cart_count()
         {
             if (!function_exists('WC') || !WC()->cart) {
                 return 0;
@@ -936,65 +778,51 @@ if (!class_exists('Woo_Cart_Plugin')) {
             return WC()->cart->get_cart_contents_count();
         }
 
-        private function get_cart_count_markup()
+        private function cart_count_markup()
         {
-            return '<span class="woo-cart-drawer-count">' . esc_html($this->get_cart_count()) . '</span>';
+            return '<span class="woo-cart-drawer-count">' . esc_html($this->cart_count()) . '</span>';
         }
 
-        private function print_drawer_script()
+        private function print_script()
         {
             ?>
             <script>
                 (function () {
                     var drawer = document.getElementById('woo-cart-drawer');
                     var overlay = document.querySelector('.woo-cart-drawer-overlay');
-                    var trigger = document.querySelector('.woo-cart-floating-button');
 
-                    if (!drawer || !overlay || !trigger) {
+                    if (!drawer || !overlay) {
                         return;
                     }
 
-                    function openDrawer() {
-                        var currentTrigger = document.querySelector('.woo-cart-floating-button');
+                    function setOpenState(isOpen) {
+                        var trigger = document.querySelector('.woo-cart-floating-button');
 
-                        drawer.classList.add('is-open');
-                        overlay.classList.add('is-open');
-                        document.body.classList.add('woo-cart-drawer-open');
-                        drawer.setAttribute('aria-hidden', 'false');
+                        drawer.classList.toggle('is-open', isOpen);
+                        overlay.classList.toggle('is-open', isOpen);
+                        document.body.classList.toggle('woo-cart-drawer-open', isOpen);
+                        drawer.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
 
-                        if (currentTrigger) {
-                            currentTrigger.setAttribute('aria-expanded', 'true');
-                        }
-                    }
-
-                    function closeDrawer() {
-                        var currentTrigger = document.querySelector('.woo-cart-floating-button');
-
-                        drawer.classList.remove('is-open');
-                        overlay.classList.remove('is-open');
-                        document.body.classList.remove('woo-cart-drawer-open');
-                        drawer.setAttribute('aria-hidden', 'true');
-
-                        if (currentTrigger) {
-                            currentTrigger.setAttribute('aria-expanded', 'false');
+                        if (trigger) {
+                            trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
                         }
                     }
 
                     document.addEventListener('click', function (event) {
                         if (event.target.closest('.woo-cart-floating-button')) {
                             event.preventDefault();
-                            openDrawer();
+                            setOpenState(true);
                         }
 
                         if (event.target.closest('[data-woo-cart-close]')) {
                             event.preventDefault();
-                            closeDrawer();
+                            setOpenState(false);
                         }
                     });
 
                     document.addEventListener('keydown', function (event) {
                         if (event.key === 'Escape') {
-                            closeDrawer();
+                            setOpenState(false);
                         }
                     });
                 })();
