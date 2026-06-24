@@ -7,3 +7,7 @@
  * Author URI: https://sablu-hasan.vercel.app/
  * Text Domain: woo-cart
  */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
