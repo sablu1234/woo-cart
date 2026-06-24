@@ -26,9 +26,13 @@ function woo_cart_default_settings()
         'view_cart_text' => 'View cart',
         'checkout_text' => 'Checkout',
         'show_floating_cart' => '1',
+        'drawer_title' => 'Shopping Cart',
         'button_bg_color' => '#111827',
         'button_text_color' => '#ffffff',
         'cart_bg_color' => '#ffffff',
+        'drawer_bg_color' => '#ffffff',
+        'drawer_text_color' => '#111827',
+        'drawer_overlay_color' => '#000000',
     );
 }
 
@@ -54,9 +58,13 @@ function woo_cart_sanitize_settings($input)
         'view_cart_text' => sanitize_text_field($input['view_cart_text'] ?? $defaults['view_cart_text']),
         'checkout_text' => sanitize_text_field($input['checkout_text'] ?? $defaults['checkout_text']),
         'show_floating_cart' => !empty($input['show_floating_cart']) ? '1' : '0',
+        'drawer_title' => sanitize_text_field($input['drawer_title'] ?? $defaults['drawer_title']),
         'button_bg_color' => sanitize_hex_color($input['button_bg_color'] ?? $defaults['button_bg_color']) ?: $defaults['button_bg_color'],
         'button_text_color' => sanitize_hex_color($input['button_text_color'] ?? $defaults['button_text_color']) ?: $defaults['button_text_color'],
         'cart_bg_color' => sanitize_hex_color($input['cart_bg_color'] ?? $defaults['cart_bg_color']) ?: $defaults['cart_bg_color'],
+        'drawer_bg_color' => sanitize_hex_color($input['drawer_bg_color'] ?? $defaults['drawer_bg_color']) ?: $defaults['drawer_bg_color'],
+        'drawer_text_color' => sanitize_hex_color($input['drawer_text_color'] ?? $defaults['drawer_text_color']) ?: $defaults['drawer_text_color'],
+        'drawer_overlay_color' => sanitize_hex_color($input['drawer_overlay_color'] ?? $defaults['drawer_overlay_color']) ?: $defaults['drawer_overlay_color'],
     );
 }
 
@@ -234,6 +242,21 @@ function woo_cart_render_settings_page()
 
                 <tr>
                     <th scope="row">
+                        <label for="woo-cart-drawer-title"><?php esc_html_e('Drawer title', 'woo-cart'); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="text"
+                            id="woo-cart-drawer-title"
+                            name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[drawer_title]"
+                            value="<?php echo esc_attr($settings['drawer_title']); ?>"
+                            class="regular-text"
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
                         <label for="woo-cart-button-bg-color"><?php esc_html_e('Button background color', 'woo-cart'); ?></label>
                     </th>
                     <td>
@@ -270,6 +293,48 @@ function woo_cart_render_settings_page()
                             id="woo-cart-bg-color"
                             name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[cart_bg_color]"
                             value="<?php echo esc_attr($settings['cart_bg_color']); ?>"
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="woo-cart-drawer-bg-color"><?php esc_html_e('Drawer background color', 'woo-cart'); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="color"
+                            id="woo-cart-drawer-bg-color"
+                            name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[drawer_bg_color]"
+                            value="<?php echo esc_attr($settings['drawer_bg_color']); ?>"
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="woo-cart-drawer-text-color"><?php esc_html_e('Drawer text color', 'woo-cart'); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="color"
+                            id="woo-cart-drawer-text-color"
+                            name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[drawer_text_color]"
+                            value="<?php echo esc_attr($settings['drawer_text_color']); ?>"
+                        >
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row">
+                        <label for="woo-cart-drawer-overlay-color"><?php esc_html_e('Drawer overlay color', 'woo-cart'); ?></label>
+                    </th>
+                    <td>
+                        <input
+                            type="color"
+                            id="woo-cart-drawer-overlay-color"
+                            name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[drawer_overlay_color]"
+                            value="<?php echo esc_attr($settings['drawer_overlay_color']); ?>"
                         >
                     </td>
                 </tr>
@@ -405,11 +470,13 @@ function woo_cart_print_dynamic_styles()
 
         .woo-cart-floating-button {
             align-items: center;
+            border: 0;
             background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
             border-radius: 999px;
             bottom: 24px;
             box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
             color: <?php echo esc_html($settings['button_text_color']); ?>;
+            cursor: pointer;
             display: flex;
             height: 56px;
             justify-content: center;
@@ -454,12 +521,131 @@ function woo_cart_print_dynamic_styles()
             top: -8px;
         }
 
+        .woo-cart-drawer-overlay {
+            background: <?php echo esc_html($settings['drawer_overlay_color']); ?>;
+            bottom: 0;
+            left: 0;
+            opacity: 0;
+            pointer-events: none;
+            position: fixed;
+            right: 0;
+            top: 0;
+            transition: opacity 220ms ease;
+            z-index: 99998;
+        }
+
+        .woo-cart-drawer {
+            background: <?php echo esc_html($settings['drawer_bg_color']); ?>;
+            bottom: 0;
+            box-shadow: -18px 0 40px rgba(15, 23, 42, 0.18);
+            color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+            display: flex;
+            flex-direction: column;
+            max-width: min(420px, 92vw);
+            position: fixed;
+            right: 0;
+            top: 0;
+            transform: translateX(105%);
+            transition: transform 260ms ease;
+            width: 420px;
+            z-index: 99999;
+        }
+
+        .woo-cart-drawer.is-open {
+            transform: translateX(0);
+        }
+
+        .woo-cart-drawer-overlay.is-open {
+            opacity: 0.45;
+            pointer-events: auto;
+        }
+
+        body.woo-cart-drawer-open {
+            overflow: hidden;
+        }
+
+        .woo-cart-drawer-header {
+            align-items: center;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.24);
+            display: flex;
+            justify-content: space-between;
+            padding: 18px 20px;
+        }
+
+        .woo-cart-drawer-title {
+            color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .woo-cart-drawer-close {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+            cursor: pointer;
+            display: flex;
+            height: 36px;
+            justify-content: center;
+            padding: 0;
+            width: 36px;
+        }
+
+        .woo-cart-drawer-close svg {
+            height: 22px;
+            width: 22px;
+        }
+
+        .woo-cart-drawer-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 18px 20px 22px;
+        }
+
+        .woo-cart-drawer-content,
+        .woo-cart-drawer-content a,
+        .woo-cart-drawer-content .woocommerce-mini-cart__total {
+            color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+        }
+
+        .woo-cart-drawer-content .woocommerce-mini-cart {
+            margin: 0;
+            padding: 0;
+        }
+
+        .woo-cart-drawer-content .woocommerce-mini-cart-item {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            list-style: none;
+            margin: 0;
+            padding: 14px 0;
+        }
+
+        .woo-cart-drawer-content .woocommerce-mini-cart__buttons {
+            display: grid;
+            gap: 10px;
+            margin: 18px 0 0;
+        }
+
+        .woo-cart-drawer-content .button {
+            background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
+            border-radius: <?php echo absint($settings['button_radius']); ?>px;
+            color: <?php echo esc_html($settings['button_text_color']); ?>;
+            text-align: center;
+            width: 100%;
+        }
+
         @media (max-width: 782px) {
             .woo-cart-floating-button {
                 bottom: 18px;
                 height: 52px;
                 right: 18px;
                 width: 52px;
+            }
+
+            .woo-cart-drawer {
+                max-width: 100vw;
+                width: 100vw;
             }
         }
     </style>
@@ -480,6 +666,8 @@ function woo_cart_render_floating_cart()
     }
 
     echo woo_cart_get_floating_cart_markup();
+    echo woo_cart_get_cart_drawer_markup();
+    woo_cart_print_drawer_script();
 }
 
 add_filter('woocommerce_add_to_cart_fragments', 'woo_cart_update_floating_cart_fragment');
@@ -491,7 +679,8 @@ function woo_cart_update_floating_cart_fragment($fragments)
         return $fragments;
     }
 
-    $fragments['a.woo-cart-floating-button'] = woo_cart_get_floating_cart_markup();
+    $fragments['.woo-cart-floating-button'] = woo_cart_get_floating_cart_markup();
+    $fragments['.woo-cart-drawer-content'] = woo_cart_get_cart_drawer_content_markup();
 
     return $fragments;
 }
@@ -511,14 +700,114 @@ function woo_cart_get_floating_cart_markup()
 
     ob_start();
     ?>
-    <a class="woo-cart-floating-button" href="<?php echo esc_url(wc_get_cart_url()); ?>" aria-label="<?php echo esc_attr($cart_label); ?>">
+    <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($cart_label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
         <span class="woo-cart-floating-count"><?php echo esc_html($cart_count); ?></span>
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
             <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
-    </a>
+    </button>
     <?php
 
     return ob_get_clean();
+}
+
+function woo_cart_get_cart_drawer_markup()
+{
+    $settings = woo_cart_get_settings();
+
+    ob_start();
+    ?>
+    <div class="woo-cart-drawer-overlay" data-woo-cart-close></div>
+    <aside id="woo-cart-drawer" class="woo-cart-drawer" aria-hidden="true">
+        <div class="woo-cart-drawer-header">
+            <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
+            <button class="woo-cart-drawer-close" type="button" aria-label="<?php esc_attr_e('Close cart', 'woo-cart'); ?>" data-woo-cart-close>
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+        <?php echo woo_cart_get_cart_drawer_content_markup(); ?>
+    </aside>
+    <?php
+
+    return ob_get_clean();
+}
+
+function woo_cart_get_cart_drawer_content_markup()
+{
+    if (!function_exists('woocommerce_mini_cart')) {
+        return '';
+    }
+
+    ob_start();
+    ?>
+    <div class="woo-cart-drawer-content">
+        <?php woocommerce_mini_cart(); ?>
+    </div>
+    <?php
+
+    return ob_get_clean();
+}
+
+function woo_cart_print_drawer_script()
+{
+    ?>
+    <script>
+        (function () {
+            var drawer = document.getElementById('woo-cart-drawer');
+            var overlay = document.querySelector('.woo-cart-drawer-overlay');
+            var trigger = document.querySelector('.woo-cart-floating-button');
+
+            if (!drawer || !overlay || !trigger) {
+                return;
+            }
+
+            function openDrawer() {
+                var currentTrigger = document.querySelector('.woo-cart-floating-button');
+
+                drawer.classList.add('is-open');
+                overlay.classList.add('is-open');
+                document.body.classList.add('woo-cart-drawer-open');
+                drawer.setAttribute('aria-hidden', 'false');
+
+                if (currentTrigger) {
+                    currentTrigger.setAttribute('aria-expanded', 'true');
+                }
+            }
+
+            function closeDrawer() {
+                var currentTrigger = document.querySelector('.woo-cart-floating-button');
+
+                drawer.classList.remove('is-open');
+                overlay.classList.remove('is-open');
+                document.body.classList.remove('woo-cart-drawer-open');
+                drawer.setAttribute('aria-hidden', 'true');
+
+                if (currentTrigger) {
+                    currentTrigger.setAttribute('aria-expanded', 'false');
+                }
+            }
+
+            document.addEventListener('click', function (event) {
+                if (event.target.closest('.woo-cart-floating-button')) {
+                    event.preventDefault();
+                    openDrawer();
+                }
+
+                if (event.target.closest('[data-woo-cart-close]')) {
+                    event.preventDefault();
+                    closeDrawer();
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeDrawer();
+                }
+            });
+        })();
+    </script>
+    <?php
 }
