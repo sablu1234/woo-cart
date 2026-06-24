@@ -343,6 +343,9 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     display: flex;
                     height: 58px;
                     justify-content: center;
+                    line-height: 1;
+                    overflow: visible;
+                    padding: 0;
                     position: fixed;
                     right: 24px;
                     transition: transform 180ms ease, box-shadow 180ms ease;
@@ -360,14 +363,20 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-floating-button svg {
                     display: block;
+                    flex: 0 0 auto;
                     height: 27px;
+                    opacity: 1;
+                    overflow: visible;
+                    position: relative;
                     width: 27px;
+                    z-index: 1;
                 }
 
                 .woo-cart-floating-button svg path,
                 .woo-cart-drawer-heading svg path,
                 .woo-cart-drawer-close svg path {
-                    stroke: currentColor;
+                    fill: none;
+                    vector-effect: non-scaling-stroke;
                 }
 
                 .woo-cart-floating-count {
@@ -765,7 +774,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
             ?>
             <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
                 <span class="woo-cart-floating-count"><?php echo esc_html($count); ?></span>
-                <?php echo $this->cart_icon_svg($settings['cart_icon_type']); ?>
+                <?php echo $this->cart_icon_svg($settings['cart_icon_type'], $settings['icon_text_color']); ?>
             </button>
             <?php
 
@@ -782,7 +791,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <aside id="woo-cart-drawer" class="woo-cart-drawer" aria-hidden="true">
                 <div class="woo-cart-drawer-header">
                     <div class="woo-cart-drawer-heading">
-                        <?php echo $this->cart_icon_svg($settings['cart_icon_type']); ?>
+                        <?php echo $this->cart_icon_svg($settings['cart_icon_type'], $settings['drawer_text_color']); ?>
                         <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
                         <?php echo $this->cart_count_markup(); ?>
                     </div>
@@ -910,17 +919,19 @@ if (!class_exists('Woo_Cart_Plugin')) {
             return '<span class="woo-cart-drawer-count">' . esc_html($this->cart_count()) . '</span>';
         }
 
-        private function cart_icon_svg($type)
+        private function cart_icon_svg($type, $color)
         {
+            $stroke = esc_attr($color);
+
             if ($type === 'cart') {
-                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M4 5h2l1.6 9.2a2 2 0 0 0 2 1.66h6.45a2 2 0 0 0 1.94-1.52L19.2 9H7.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20h.01M17 20h.01" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M4 5h2l1.6 9.2a2 2 0 0 0 2 1.66h6.45a2 2 0 0 0 1.94-1.52L19.2 9H7.1" stroke="' . $stroke . '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20h.01M17 20h.01" stroke="' . $stroke . '" stroke-width="2.8" stroke-linecap="round"/></svg>';
             }
 
             if ($type === 'basket') {
-                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M5.2 10h13.6l-1.2 7.1a2 2 0 0 1-1.98 1.67H8.38A2 2 0 0 1 6.4 17.1L5.2 10Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 10 12 5l3 5M8.5 13.5h7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M5.2 10h13.6l-1.2 7.1a2 2 0 0 1-1.98 1.67H8.38A2 2 0 0 1 6.4 17.1L5.2 10Z" stroke="' . $stroke . '" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 10 12 5l3 5M8.5 13.5h7" stroke="' . $stroke . '" stroke-width="1.9" stroke-linecap="round"/></svg>';
             }
 
-            return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M7 8.25h10l-.7 8.3a2 2 0 0 1-2 1.83H9.7a2 2 0 0 1-2-1.83L7 8.25Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.25 8.25a2.75 2.75 0 0 1 5.5 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M10 12h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+            return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M7 8.25h10l-.7 8.3a2 2 0 0 1-2 1.83H9.7a2 2 0 0 1-2-1.83L7 8.25Z" stroke="' . $stroke . '" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.25 8.25a2.75 2.75 0 0 1 5.5 0" stroke="' . $stroke . '" stroke-width="1.9" stroke-linecap="round"/><path d="M10 12h4" stroke="' . $stroke . '" stroke-width="1.9" stroke-linecap="round"/></svg>';
         }
 
         public function ajax_update_quantity()
