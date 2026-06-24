@@ -50,7 +50,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 'button_bg_color' => '#111827',
                 'button_text_color' => '#ffffff',
                 'cart_bg_color' => '#ffffff',
-                'drawer_bg_color' => '#ffffff',
+                'drawer_bg_color' => '#f6f6f4',
                 'drawer_text_color' => '#111827',
                 'drawer_overlay_color' => '#000000',
             );
@@ -444,13 +444,38 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     padding: 20px 24px;
                 }
 
+                .woo-cart-drawer-heading {
+                    align-items: center;
+                    display: flex;
+                    gap: 10px;
+                }
+
+                .woo-cart-drawer-heading svg {
+                    height: 22px;
+                    width: 22px;
+                }
+
                 .woo-cart-drawer-title {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
-                    font-size: 21px;
+                    font-size: 16px;
                     font-weight: 700;
                     letter-spacing: 0;
                     line-height: 1.2;
                     margin: 0;
+                }
+
+                .woo-cart-drawer-count {
+                    align-items: center;
+                    background: #050505;
+                    border-radius: 999px;
+                    color: #ffffff;
+                    display: inline-flex;
+                    font-size: 11px;
+                    font-weight: 700;
+                    height: 22px;
+                    justify-content: center;
+                    min-width: 22px;
+                    padding: 0 7px;
                 }
 
                 .woo-cart-drawer-close {
@@ -482,7 +507,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-drawer-content {
                     flex: 1;
                     overflow-y: auto;
-                    padding: 18px 24px 24px;
+                    padding: 14px 18px 24px;
                 }
 
                 .woo-cart-drawer-content,
@@ -491,101 +516,166 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart {
+                .woo-cart-drawer-list {
                     display: grid;
-                    gap: 12px;
+                    gap: 14px;
                     margin: 0;
                     padding: 0;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart-item {
-                    background: rgba(248, 250, 252, 0.72);
-                    border: 1px solid rgba(148, 163, 184, 0.18);
-                    border-radius: 14px;
-                    display: block;
+                .woo-cart-drawer-item {
+                    align-items: center;
+                    background: #ffffff;
+                    border: 1px solid rgba(17, 24, 39, 0.06);
+                    border-radius: 18px;
+                    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+                    display: grid;
+                    gap: 14px;
+                    grid-template-columns: 84px minmax(0, 1fr) auto;
                     list-style: none;
                     margin: 0;
-                    min-height: 100px;
-                    padding: 12px 42px 12px 104px;
+                    min-height: 96px;
+                    padding: 12px;
                     position: relative;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart-item a:not(.remove) {
+                .woo-cart-item-thumb {
+                    align-items: center;
+                    background: #f7f7f5;
+                    border: 1px solid rgba(17, 24, 39, 0.06);
+                    border-radius: 14px;
+                    display: flex;
+                    height: 84px;
+                    justify-content: center;
+                    overflow: hidden;
+                    width: 84px;
+                }
+
+                .woo-cart-item-thumb img {
+                    display: block;
+                    height: 100%;
+                    object-fit: contain;
+                    width: 100%;
+                }
+
+                .woo-cart-item-main {
+                    min-width: 0;
+                }
+
+                .woo-cart-item-title {
+                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     display: block;
                     font-size: 14px;
-                    font-weight: 650;
-                    line-height: 1.35;
+                    font-weight: 700;
+                    line-height: 1.3;
                     text-decoration: none;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart-item img {
-                    background: #f8fafc;
-                    border-radius: <?php echo absint($settings['product_image_radius']); ?>px;
-                    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
-                    float: none;
-                    height: 76px;
-                    left: 12px;
-                    margin: 0;
-                    object-fit: cover;
-                    position: absolute;
-                    top: 12px;
-                    width: 76px;
+                .woo-cart-item-title:hover {
+                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+                    opacity: 0.75;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart-item .quantity {
-                    color: rgba(15, 23, 42, 0.72);
-                    display: block;
+                .woo-cart-item-quantity {
+                    align-items: center;
+                    display: inline-flex;
+                    gap: 8px;
+                    margin-top: 12px;
+                }
+
+                .woo-cart-qty-pill {
+                    align-items: center;
+                    background: #f4f4f1;
+                    border-radius: 999px;
+                    color: #111827;
+                    display: inline-flex;
                     font-size: 13px;
-                    line-height: 1.3;
-                    margin-top: 8px;
+                    font-weight: 700;
+                    height: 28px;
+                    justify-content: center;
+                    min-width: 28px;
+                    padding: 0 10px;
+                }
+
+                .woo-cart-qty-button {
+                    align-items: center;
+                    background: #f4f4f1;
+                    border: 0;
+                    border-radius: 999px;
+                    color: #111827;
+                    display: inline-flex;
+                    font-size: 14px;
+                    font-weight: 700;
+                    height: 28px;
+                    justify-content: center;
+                    line-height: 1;
+                    width: 28px;
+                }
+
+                .woo-cart-item-price {
+                    align-self: end;
+                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+                    font-size: 14px;
+                    font-weight: 800;
+                    justify-self: end;
+                    white-space: nowrap;
                 }
 
                 .woo-cart-drawer-content .remove,
-                .woo-cart-drawer-content a.remove {
+                .woo-cart-drawer-content a.remove,
+                .woo-cart-item-remove {
                     align-items: center;
-                    background: rgba(15, 23, 42, 0.06);
+                    background: #050505;
                     border-radius: 999px;
-                    color: <?php echo esc_html($settings['drawer_text_color']); ?> !important;
+                    color: #ffffff !important;
                     display: flex;
-                    font-size: 18px;
-                    font-weight: 400;
-                    height: 24px;
+                    font-size: 16px;
+                    font-weight: 700;
+                    height: 26px;
                     justify-content: center;
                     line-height: 1;
                     position: absolute;
-                    right: 10px;
+                    right: 12px;
                     text-decoration: none;
-                    top: 10px;
-                    width: 24px;
+                    top: 12px;
+                    width: 26px;
                 }
 
                 .woo-cart-drawer-content .remove:hover,
-                .woo-cart-drawer-content a.remove:hover {
+                .woo-cart-drawer-content a.remove:hover,
+                .woo-cart-item-remove:hover {
                     background: <?php echo esc_html($settings['badge_bg_color']); ?>;
                     color: #ffffff !important;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart__total {
+                .woo-cart-drawer-summary {
+                    background: #ffffff;
+                    border: 1px solid rgba(17, 24, 39, 0.06);
+                    border-radius: 18px;
+                    margin-top: 16px;
+                    padding: 16px;
+                }
+
+                .woo-cart-drawer-total {
                     align-items: center;
-                    border-top: 1px solid rgba(148, 163, 184, 0.22);
                     display: flex;
                     font-size: 16px;
                     justify-content: space-between;
-                    margin: 20px 0 0;
-                    padding-top: 18px;
+                    margin: 0;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart__total strong {
+                .woo-cart-drawer-total strong,
+                .woo-cart-drawer-total span {
                     font-weight: 700;
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart__buttons {
+                .woo-cart-drawer-actions {
                     display: grid;
                     gap: 10px;
-                    margin: 16px 0 0;
+                    margin-top: 14px;
                 }
 
-                .woo-cart-drawer-content .button {
+                .woo-cart-drawer-button {
                     background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
                     border-radius: <?php echo absint($settings['button_radius']); ?>px;
                     box-shadow: none;
@@ -602,21 +692,31 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     width: 100%;
                 }
 
-                .woo-cart-drawer-content .button:hover,
-                .woo-cart-drawer-content .button:focus {
+                .woo-cart-drawer-button:hover,
+                .woo-cart-drawer-button:focus {
                     color: <?php echo esc_html($settings['button_text_color']); ?>;
                     opacity: 0.9;
                     outline: none;
                     transform: translateY(-1px);
                 }
 
-                .woo-cart-drawer-content .woocommerce-mini-cart__empty-message {
-                    background: rgba(248, 250, 252, 0.8);
-                    border: 1px dashed rgba(148, 163, 184, 0.45);
-                    border-radius: 14px;
+                .woo-cart-drawer-button.is-secondary {
+                    background: #ffffff;
+                    border: 1px solid rgba(17, 24, 39, 0.12);
+                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+                }
+
+                .woo-cart-drawer-empty {
+                    background: #ffffff;
+                    border: 1px dashed rgba(17, 24, 39, 0.16);
+                    border-radius: 18px;
                     margin: 0;
-                    padding: 28px 20px;
+                    padding: 34px 22px;
                     text-align: center;
+                }
+
+                .woo-cart-drawer-empty p {
+                    margin: 0;
                 }
 
                 @media (max-width: 782px) {
@@ -631,6 +731,21 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     .woo-cart-drawer {
                         max-width: 100vw;
                         width: 100vw;
+                    }
+
+                    .woo-cart-drawer-item {
+                        grid-template-columns: 76px minmax(0, 1fr);
+                    }
+
+                    .woo-cart-item-thumb {
+                        height: 76px;
+                        width: 76px;
+                    }
+
+                    .woo-cart-item-price {
+                        grid-column: 2;
+                        justify-self: start;
+                        margin-top: 8px;
                     }
                 }
             </style>
@@ -655,6 +770,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
             }
 
             $fragments['.woo-cart-floating-button'] = $this->get_floating_cart_markup();
+            $fragments['.woo-cart-drawer-count'] = $this->get_cart_count_markup();
             $fragments['.woo-cart-drawer-content'] = $this->get_cart_drawer_content_markup();
 
             return $fragments;
@@ -677,7 +793,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 return '';
             }
 
-            $cart_count = WC()->cart->get_cart_contents_count();
+            $cart_count = $this->get_cart_count();
             $cart_label = sprintf(
                 _n('%d item in cart', '%d items in cart', $cart_count, 'woo-cart'),
                 $cart_count
@@ -706,7 +822,14 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <div class="woo-cart-drawer-overlay" data-woo-cart-close></div>
             <aside id="woo-cart-drawer" class="woo-cart-drawer" aria-hidden="true">
                 <div class="woo-cart-drawer-header">
-                    <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
+                    <div class="woo-cart-drawer-heading">
+                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+                            <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
+                        <?php echo $this->get_cart_count_markup(); ?>
+                    </div>
                     <button class="woo-cart-drawer-close" type="button" aria-label="<?php esc_attr_e('Close cart', 'woo-cart'); ?>" data-woo-cart-close>
                         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
                             <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -722,18 +845,100 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
         private function get_cart_drawer_content_markup()
         {
-            if (!function_exists('woocommerce_mini_cart')) {
+            if (!function_exists('WC') || !WC()->cart) {
                 return '';
             }
+
+            $settings = $this->get_settings();
+            $cart_items = WC()->cart->get_cart();
 
             ob_start();
             ?>
             <div class="woo-cart-drawer-content">
-                <?php woocommerce_mini_cart(); ?>
+                <?php if (empty($cart_items)) : ?>
+                    <div class="woo-cart-drawer-empty">
+                        <p><?php esc_html_e('Your cart is empty.', 'woo-cart'); ?></p>
+                    </div>
+                <?php else : ?>
+                    <div class="woo-cart-drawer-list">
+                        <?php foreach ($cart_items as $cart_item_key => $cart_item) : ?>
+                            <?php
+                            $product = $cart_item['data'];
+
+                            if (!$product || !$product->exists() || $cart_item['quantity'] <= 0) {
+                                continue;
+                            }
+
+                            $product_name = $product->get_name();
+                            $product_permalink = $product->is_visible() ? $product->get_permalink($cart_item) : '';
+                            $product_image = $product->get_image('woocommerce_thumbnail');
+                            $line_price = WC()->cart->get_product_subtotal($product, $cart_item['quantity']);
+                            ?>
+                            <div class="woo-cart-drawer-item">
+                                <a class="woo-cart-item-thumb" href="<?php echo esc_url($product_permalink ?: wc_get_cart_url()); ?>">
+                                    <?php echo wp_kses_post($product_image); ?>
+                                </a>
+
+                                <div class="woo-cart-item-main">
+                                    <a class="woo-cart-item-title" href="<?php echo esc_url($product_permalink ?: wc_get_cart_url()); ?>">
+                                        <?php echo esc_html($product_name); ?>
+                                    </a>
+
+                                    <div class="woo-cart-item-quantity" aria-label="<?php esc_attr_e('Quantity', 'woo-cart'); ?>">
+                                        <span class="woo-cart-qty-button" aria-hidden="true">-</span>
+                                        <span class="woo-cart-qty-pill"><?php echo esc_html($cart_item['quantity']); ?></span>
+                                        <span class="woo-cart-qty-button" aria-hidden="true">+</span>
+                                    </div>
+                                </div>
+
+                                <div class="woo-cart-item-price"><?php echo wp_kses_post($line_price); ?></div>
+
+                                <a
+                                    class="woo-cart-item-remove"
+                                    href="<?php echo esc_url(wc_get_cart_remove_url($cart_item_key)); ?>"
+                                    aria-label="<?php echo esc_attr(sprintf(__('Remove %s from cart', 'woo-cart'), $product_name)); ?>"
+                                    data-product_id="<?php echo esc_attr($product->get_id()); ?>"
+                                    data-cart_item_key="<?php echo esc_attr($cart_item_key); ?>"
+                                    data-product_sku="<?php echo esc_attr($product->get_sku()); ?>"
+                                >&times;</a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <div class="woo-cart-drawer-summary">
+                        <div class="woo-cart-drawer-total">
+                            <strong><?php esc_html_e('Subtotal', 'woo-cart'); ?></strong>
+                            <span><?php echo wp_kses_post(WC()->cart->get_cart_subtotal()); ?></span>
+                        </div>
+
+                        <div class="woo-cart-drawer-actions">
+                            <a class="woo-cart-drawer-button is-secondary" href="<?php echo esc_url(wc_get_cart_url()); ?>">
+                                <?php echo esc_html($settings['view_cart_text']); ?>
+                            </a>
+                            <a class="woo-cart-drawer-button" href="<?php echo esc_url(wc_get_checkout_url()); ?>">
+                                <?php echo esc_html($settings['checkout_text']); ?>
+                            </a>
+                        </div>
+                    </div>
+                <?php endif; ?>
             </div>
             <?php
 
             return ob_get_clean();
+        }
+
+        private function get_cart_count()
+        {
+            if (!function_exists('WC') || !WC()->cart) {
+                return 0;
+            }
+
+            return WC()->cart->get_cart_contents_count();
+        }
+
+        private function get_cart_count_markup()
+        {
+            return '<span class="woo-cart-drawer-count">' . esc_html($this->get_cart_count()) . '</span>';
         }
 
         private function print_drawer_script()
