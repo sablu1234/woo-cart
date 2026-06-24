@@ -25,6 +25,7 @@ function woo_cart_default_settings()
         'button_radius' => '6',
         'view_cart_text' => 'View cart',
         'checkout_text' => 'Checkout',
+        'show_floating_cart' => '1',
         'button_bg_color' => '#111827',
         'button_text_color' => '#ffffff',
         'cart_bg_color' => '#ffffff',
@@ -52,6 +53,7 @@ function woo_cart_sanitize_settings($input)
         'button_radius' => absint($input['button_radius'] ?? $defaults['button_radius']),
         'view_cart_text' => sanitize_text_field($input['view_cart_text'] ?? $defaults['view_cart_text']),
         'checkout_text' => sanitize_text_field($input['checkout_text'] ?? $defaults['checkout_text']),
+        'show_floating_cart' => !empty($input['show_floating_cart']) ? '1' : '0',
         'button_bg_color' => sanitize_hex_color($input['button_bg_color'] ?? $defaults['button_bg_color']) ?: $defaults['button_bg_color'],
         'button_text_color' => sanitize_hex_color($input['button_text_color'] ?? $defaults['button_text_color']) ?: $defaults['button_text_color'],
         'cart_bg_color' => sanitize_hex_color($input['cart_bg_color'] ?? $defaults['cart_bg_color']) ?: $defaults['cart_bg_color'],
@@ -212,6 +214,21 @@ function woo_cart_render_settings_page()
                             value="<?php echo esc_attr($settings['checkout_text']); ?>"
                             class="regular-text"
                         >
+                    </td>
+                </tr>
+
+                <tr>
+                    <th scope="row"><?php esc_html_e('Floating cart icon', 'woo-cart'); ?></th>
+                    <td>
+                        <label>
+                            <input
+                                type="checkbox"
+                                name="<?php echo esc_attr(WOO_CART_OPTION_KEY); ?>[show_floating_cart]"
+                                value="1"
+                                <?php checked($settings['show_floating_cart'], '1'); ?>
+                            >
+                            <?php esc_html_e('Show right-bottom cart icon on frontend', 'woo-cart'); ?>
+                        </label>
                     </td>
                 </tr>
 
@@ -385,6 +402,123 @@ function woo_cart_print_dynamic_styles()
             color: <?php echo esc_html($settings['button_text_color']); ?>;
             opacity: 0.9;
         }
+
+        .woo-cart-floating-button {
+            align-items: center;
+            background-color: <?php echo esc_html($settings['button_bg_color']); ?>;
+            border-radius: 999px;
+            bottom: 24px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.22);
+            color: <?php echo esc_html($settings['button_text_color']); ?>;
+            display: flex;
+            height: 56px;
+            justify-content: center;
+            position: fixed;
+            right: 24px;
+            text-decoration: none;
+            transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+            width: 56px;
+            z-index: 99999;
+        }
+
+        .woo-cart-floating-button:hover,
+        .woo-cart-floating-button:focus {
+            color: <?php echo esc_html($settings['button_text_color']); ?>;
+            box-shadow: 0 16px 34px rgba(15, 23, 42, 0.28);
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .woo-cart-floating-button svg {
+            display: block;
+            height: 25px;
+            width: 25px;
+        }
+
+        .woo-cart-floating-count {
+            align-items: center;
+            background: #ef4444;
+            border: 2px solid #ffffff;
+            border-radius: 999px;
+            color: #ffffff;
+            display: flex;
+            font-size: 12px;
+            font-weight: 700;
+            height: 24px;
+            justify-content: center;
+            line-height: 1;
+            min-width: 24px;
+            padding: 0 6px;
+            position: absolute;
+            right: -6px;
+            top: -8px;
+        }
+
+        @media (max-width: 782px) {
+            .woo-cart-floating-button {
+                bottom: 18px;
+                height: 52px;
+                right: 18px;
+                width: 52px;
+            }
+        }
     </style>
     <?php
+}
+
+add_action('wp_footer', 'woo_cart_render_floating_cart');
+function woo_cart_render_floating_cart()
+{
+    if (!class_exists('WooCommerce')) {
+        return;
+    }
+
+    $settings = woo_cart_get_settings();
+
+    if ($settings['show_floating_cart'] !== '1') {
+        return;
+    }
+
+    echo woo_cart_get_floating_cart_markup();
+}
+
+add_filter('woocommerce_add_to_cart_fragments', 'woo_cart_update_floating_cart_fragment');
+function woo_cart_update_floating_cart_fragment($fragments)
+{
+    $settings = woo_cart_get_settings();
+
+    if ($settings['show_floating_cart'] !== '1') {
+        return $fragments;
+    }
+
+    $fragments['a.woo-cart-floating-button'] = woo_cart_get_floating_cart_markup();
+
+    return $fragments;
+}
+
+function woo_cart_get_floating_cart_markup()
+{
+    if (!function_exists('WC') || !WC()->cart) {
+        return '';
+    }
+
+    $cart_count = WC()->cart->get_cart_contents_count();
+    $cart_label = sprintf(
+        /* translators: %d: cart item count. */
+        _n('%d item in cart', '%d items in cart', $cart_count, 'woo-cart'),
+        $cart_count
+    );
+
+    ob_start();
+    ?>
+    <a class="woo-cart-floating-button" href="<?php echo esc_url(wc_get_cart_url()); ?>" aria-label="<?php echo esc_attr($cart_label); ?>">
+        <span class="woo-cart-floating-count"><?php echo esc_html($cart_count); ?></span>
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
+            <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+    </a>
+    <?php
+
+    return ob_get_clean();
 }
