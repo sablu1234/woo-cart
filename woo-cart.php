@@ -60,19 +60,31 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
             return array(
                 'show_cart' => !empty($input['show_cart']) ? '1' : '0',
-                'drawer_title' => sanitize_text_field($input['drawer_title'] ?? $defaults['drawer_title']),
-                'empty_text' => sanitize_text_field($input['empty_text'] ?? $defaults['empty_text']),
-                'view_cart_text' => sanitize_text_field($input['view_cart_text'] ?? $defaults['view_cart_text']),
-                'checkout_text' => sanitize_text_field($input['checkout_text'] ?? $defaults['checkout_text']),
-                'icon_bg_color' => sanitize_hex_color($input['icon_bg_color'] ?? $defaults['icon_bg_color']) ?: $defaults['icon_bg_color'],
-                'icon_text_color' => sanitize_hex_color($input['icon_text_color'] ?? $defaults['icon_text_color']) ?: $defaults['icon_text_color'],
-                'badge_bg_color' => sanitize_hex_color($input['badge_bg_color'] ?? $defaults['badge_bg_color']) ?: $defaults['badge_bg_color'],
-                'drawer_bg_color' => sanitize_hex_color($input['drawer_bg_color'] ?? $defaults['drawer_bg_color']) ?: $defaults['drawer_bg_color'],
-                'drawer_text_color' => sanitize_hex_color($input['drawer_text_color'] ?? $defaults['drawer_text_color']) ?: $defaults['drawer_text_color'],
-                'button_bg_color' => sanitize_hex_color($input['button_bg_color'] ?? $defaults['button_bg_color']) ?: $defaults['button_bg_color'],
-                'button_text_color' => sanitize_hex_color($input['button_text_color'] ?? $defaults['button_text_color']) ?: $defaults['button_text_color'],
-                'overlay_color' => sanitize_hex_color($input['overlay_color'] ?? $defaults['overlay_color']) ?: $defaults['overlay_color'],
+                'drawer_title' => sanitize_text_field($this->posted_value($input, 'drawer_title', $defaults)),
+                'empty_text' => sanitize_text_field($this->posted_value($input, 'empty_text', $defaults)),
+                'view_cart_text' => sanitize_text_field($this->posted_value($input, 'view_cart_text', $defaults)),
+                'checkout_text' => sanitize_text_field($this->posted_value($input, 'checkout_text', $defaults)),
+                'icon_bg_color' => $this->sanitize_color($this->posted_value($input, 'icon_bg_color', $defaults), $defaults['icon_bg_color']),
+                'icon_text_color' => $this->sanitize_color($this->posted_value($input, 'icon_text_color', $defaults), $defaults['icon_text_color']),
+                'badge_bg_color' => $this->sanitize_color($this->posted_value($input, 'badge_bg_color', $defaults), $defaults['badge_bg_color']),
+                'drawer_bg_color' => $this->sanitize_color($this->posted_value($input, 'drawer_bg_color', $defaults), $defaults['drawer_bg_color']),
+                'drawer_text_color' => $this->sanitize_color($this->posted_value($input, 'drawer_text_color', $defaults), $defaults['drawer_text_color']),
+                'button_bg_color' => $this->sanitize_color($this->posted_value($input, 'button_bg_color', $defaults), $defaults['button_bg_color']),
+                'button_text_color' => $this->sanitize_color($this->posted_value($input, 'button_text_color', $defaults), $defaults['button_text_color']),
+                'overlay_color' => $this->sanitize_color($this->posted_value($input, 'overlay_color', $defaults), $defaults['overlay_color']),
             );
+        }
+
+        private function posted_value($input, $key, $defaults)
+        {
+            return isset($input[$key]) ? $input[$key] : $defaults[$key];
+        }
+
+        private function sanitize_color($value, $fallback)
+        {
+            $color = sanitize_hex_color($value);
+
+            return $color ? $color : $fallback;
         }
 
         public function add_settings_page()
