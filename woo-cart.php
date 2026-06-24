@@ -24,6 +24,8 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
             add_action('wp_head', array($this, 'print_styles'));
             add_action('wp_footer', array($this, 'render_cart_drawer'));
+            add_action('wp_ajax_woo_cart_update_quantity', array($this, 'ajax_update_quantity'));
+            add_action('wp_ajax_nopriv_woo_cart_update_quantity', array($this, 'ajax_update_quantity'));
             add_filter('woocommerce_add_to_cart_fragments', array($this, 'update_cart_fragments'));
         }
 
@@ -273,6 +275,12 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     width: 27px;
                 }
 
+                .woo-cart-floating-button svg path,
+                .woo-cart-drawer-heading svg path,
+                .woo-cart-drawer-close svg path {
+                    stroke: currentColor;
+                }
+
                 .woo-cart-floating-count {
                     align-items: center;
                     background: <?php echo esc_html($settings['badge_bg_color']); ?>;
@@ -469,9 +477,11 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     margin-top: 12px;
                 }
 
-                .woo-cart-qty {
+                .woo-cart-qty,
+                .woo-cart-qty-button {
                     align-items: center;
                     background: #f4f4f1;
+                    border: 0;
                     border-radius: 999px;
                     color: #111111;
                     display: inline-flex;
@@ -479,8 +489,24 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     font-weight: 800;
                     height: 28px;
                     justify-content: center;
+                }
+
+                .woo-cart-qty {
                     min-width: 38px;
                     padding: 0 12px;
+                }
+
+                .woo-cart-qty-button {
+                    cursor: pointer;
+                    padding: 0;
+                    transition: background-color 160ms ease;
+                    width: 28px;
+                }
+
+                .woo-cart-qty-button:hover,
+                .woo-cart-qty-button:focus {
+                    background: #e8e8e3;
+                    outline: none;
                 }
 
                 .woo-cart-item-price {
@@ -647,8 +673,9 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
                 <span class="woo-cart-floating-count"><?php echo esc_html($count); ?></span>
                 <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
-                    <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                    <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M7 8.25h10l-.7 8.3a2 2 0 0 1-2 1.83H9.7a2 2 0 0 1-2-1.83L7 8.25Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
+                    <path d="M9.25 8.25a2.75 2.75 0 0 1 5.5 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                    <path d="M10 12h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
                 </svg>
             </button>
             <?php
@@ -750,11 +777,13 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 <div class="woo-cart-item-main">
                     <a class="woo-cart-item-title" href="<?php echo esc_url($product_url); ?>">
                         <?php echo esc_html($product_name); ?>
-                    </a>
-                    <div class="woo-cart-item-meta">
-                        <span class="woo-cart-qty"><?php echo esc_html($cart_item['quantity']); ?></span>
-                    </div>
-                </div>
+                                    </a>
+                                    <div class="woo-cart-item-meta">
+                                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="minus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Decrease quantity', 'woo-cart'); ?>">-</button>
+                                        <span class="woo-cart-qty"><?php echo esc_html($cart_item['quantity']); ?></span>
+                                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="plus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Increase quantity', 'woo-cart'); ?>">+</button>
+                                    </div>
+                                </div>
 
                 <div class="woo-cart-item-price"><?php echo wp_kses_post($line_price); ?></div>
 
@@ -795,13 +824,42 @@ if (!class_exists('Woo_Cart_Plugin')) {
             return '<span class="woo-cart-drawer-count">' . esc_html($this->cart_count()) . '</span>';
         }
 
+        public function ajax_update_quantity()
+        {
+            check_ajax_referer('woo_cart_update_quantity', 'nonce');
+
+            if (!function_exists('WC') || !WC()->cart) {
+                wp_send_json_error(array('message' => __('Cart is not available.', 'woo-cart')));
+            }
+
+            $cart_item_key = isset($_POST['cart_item_key']) ? sanitize_text_field(wp_unslash($_POST['cart_item_key'])) : '';
+            $quantity = isset($_POST['quantity']) ? absint($_POST['quantity']) : 0;
+
+            if (!$cart_item_key || !isset(WC()->cart->cart_contents[$cart_item_key])) {
+                wp_send_json_error(array('message' => __('Cart item was not found.', 'woo-cart')));
+            }
+
+            WC()->cart->set_quantity($cart_item_key, $quantity, true);
+            WC()->cart->calculate_totals();
+
+            wp_send_json_success(array(
+                'button' => $this->floating_button_markup(),
+                'count' => $this->cart_count_markup(),
+                'content' => $this->drawer_content_markup(),
+            ));
+        }
+
         private function print_script()
         {
+            $ajax_url = admin_url('admin-ajax.php');
+            $nonce = wp_create_nonce('woo_cart_update_quantity');
             ?>
             <script>
                 (function () {
                     var drawer = document.getElementById('woo-cart-drawer');
                     var overlay = document.querySelector('.woo-cart-drawer-overlay');
+                    var ajaxUrl = <?php echo wp_json_encode($ajax_url); ?>;
+                    var nonce = <?php echo wp_json_encode($nonce); ?>;
 
                     if (!drawer || !overlay) {
                         return;
@@ -830,6 +888,13 @@ if (!class_exists('Woo_Cart_Plugin')) {
                             event.preventDefault();
                             setOpenState(false);
                         }
+
+                        var quantityButton = event.target.closest('[data-woo-cart-qty]');
+
+                        if (quantityButton) {
+                            event.preventDefault();
+                            updateQuantity(quantityButton);
+                        }
                     });
 
                     document.addEventListener('keydown', function (event) {
@@ -837,6 +902,68 @@ if (!class_exists('Woo_Cart_Plugin')) {
                             setOpenState(false);
                         }
                     });
+
+                    function updateQuantity(button) {
+                        var item = button.closest('.woo-cart-drawer-item');
+                        var quantity = item ? item.querySelector('.woo-cart-qty') : null;
+                        var currentQuantity = quantity ? parseInt(quantity.textContent, 10) : 0;
+                        var nextQuantity = button.getAttribute('data-woo-cart-qty') === 'plus'
+                            ? currentQuantity + 1
+                            : currentQuantity - 1;
+
+                        if (!item || !button.getAttribute('data-cart-item-key')) {
+                            return;
+                        }
+
+                        button.disabled = true;
+                        item.classList.add('is-updating');
+
+                        var body = new URLSearchParams();
+                        body.append('action', 'woo_cart_update_quantity');
+                        body.append('nonce', nonce);
+                        body.append('cart_item_key', button.getAttribute('data-cart-item-key'));
+                        body.append('quantity', Math.max(0, nextQuantity));
+
+                        fetch(ajaxUrl, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            },
+                            body: body.toString()
+                        })
+                            .then(function (response) {
+                                return response.json();
+                            })
+                            .then(function (response) {
+                                if (!response || !response.success) {
+                                    return;
+                                }
+
+                                replaceElement('.woo-cart-floating-button', response.data.button);
+                                replaceElement('.woo-cart-drawer-count', response.data.count);
+                                replaceElement('.woo-cart-drawer-content', response.data.content);
+                            })
+                            .finally(function () {
+                                button.disabled = false;
+                                item.classList.remove('is-updating');
+                            });
+                    }
+
+                    function replaceElement(selector, html) {
+                        var current = document.querySelector(selector);
+                        var wrapper = document.createElement('div');
+
+                        if (!current || !html) {
+                            return;
+                        }
+
+                        wrapper.innerHTML = html;
+
+                        if (wrapper.firstElementChild) {
+                            current.replaceWith(wrapper.firstElementChild);
+                        }
+                    }
                 })();
             </script>
             <?php
