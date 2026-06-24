@@ -37,14 +37,25 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 'empty_text' => 'Your cart is empty.',
                 'view_cart_text' => 'View Cart',
                 'checkout_text' => 'Checkout',
+                'cart_icon_type' => 'bag',
                 'icon_bg_color' => '#111111',
                 'icon_text_color' => '#ffffff',
                 'badge_bg_color' => '#111111',
                 'drawer_bg_color' => '#f6f6f4',
                 'drawer_text_color' => '#111111',
+                'close_icon_color' => '#111111',
+                'close_icon_hover_color' => '#111111',
+                'close_icon_hover_bg_color' => '#f4f4f1',
                 'button_bg_color' => '#111111',
                 'button_text_color' => '#ffffff',
                 'overlay_color' => '#000000',
+                'drawer_title_font_size' => '16',
+                'product_title_font_size' => '14',
+                'price_font_size' => '14',
+                'quantity_font_size' => '13',
+                'button_font_size' => '14',
+                'count_font_size' => '12',
+                'empty_font_size' => '14',
             );
         }
 
@@ -66,14 +77,25 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 'empty_text' => sanitize_text_field($this->posted_value($input, 'empty_text', $defaults)),
                 'view_cart_text' => sanitize_text_field($this->posted_value($input, 'view_cart_text', $defaults)),
                 'checkout_text' => sanitize_text_field($this->posted_value($input, 'checkout_text', $defaults)),
+                'cart_icon_type' => $this->sanitize_icon_type($this->posted_value($input, 'cart_icon_type', $defaults)),
                 'icon_bg_color' => $this->sanitize_color($this->posted_value($input, 'icon_bg_color', $defaults), $defaults['icon_bg_color']),
                 'icon_text_color' => $this->sanitize_color($this->posted_value($input, 'icon_text_color', $defaults), $defaults['icon_text_color']),
                 'badge_bg_color' => $this->sanitize_color($this->posted_value($input, 'badge_bg_color', $defaults), $defaults['badge_bg_color']),
                 'drawer_bg_color' => $this->sanitize_color($this->posted_value($input, 'drawer_bg_color', $defaults), $defaults['drawer_bg_color']),
                 'drawer_text_color' => $this->sanitize_color($this->posted_value($input, 'drawer_text_color', $defaults), $defaults['drawer_text_color']),
+                'close_icon_color' => $this->sanitize_color($this->posted_value($input, 'close_icon_color', $defaults), $defaults['close_icon_color']),
+                'close_icon_hover_color' => $this->sanitize_color($this->posted_value($input, 'close_icon_hover_color', $defaults), $defaults['close_icon_hover_color']),
+                'close_icon_hover_bg_color' => $this->sanitize_color($this->posted_value($input, 'close_icon_hover_bg_color', $defaults), $defaults['close_icon_hover_bg_color']),
                 'button_bg_color' => $this->sanitize_color($this->posted_value($input, 'button_bg_color', $defaults), $defaults['button_bg_color']),
                 'button_text_color' => $this->sanitize_color($this->posted_value($input, 'button_text_color', $defaults), $defaults['button_text_color']),
                 'overlay_color' => $this->sanitize_color($this->posted_value($input, 'overlay_color', $defaults), $defaults['overlay_color']),
+                'drawer_title_font_size' => $this->sanitize_size($this->posted_value($input, 'drawer_title_font_size', $defaults), $defaults['drawer_title_font_size'], 10, 36),
+                'product_title_font_size' => $this->sanitize_size($this->posted_value($input, 'product_title_font_size', $defaults), $defaults['product_title_font_size'], 10, 30),
+                'price_font_size' => $this->sanitize_size($this->posted_value($input, 'price_font_size', $defaults), $defaults['price_font_size'], 10, 30),
+                'quantity_font_size' => $this->sanitize_size($this->posted_value($input, 'quantity_font_size', $defaults), $defaults['quantity_font_size'], 10, 24),
+                'button_font_size' => $this->sanitize_size($this->posted_value($input, 'button_font_size', $defaults), $defaults['button_font_size'], 10, 28),
+                'count_font_size' => $this->sanitize_size($this->posted_value($input, 'count_font_size', $defaults), $defaults['count_font_size'], 9, 22),
+                'empty_font_size' => $this->sanitize_size($this->posted_value($input, 'empty_font_size', $defaults), $defaults['empty_font_size'], 10, 28),
             );
         }
 
@@ -87,6 +109,24 @@ if (!class_exists('Woo_Cart_Plugin')) {
             $color = sanitize_hex_color($value);
 
             return $color ? $color : $fallback;
+        }
+
+        private function sanitize_icon_type($value)
+        {
+            $allowed = array('bag', 'cart', 'basket');
+
+            return in_array($value, $allowed, true) ? $value : 'bag';
+        }
+
+        private function sanitize_size($value, $fallback, $min, $max)
+        {
+            $size = absint($value);
+
+            if ($size < $min || $size > $max) {
+                return $fallback;
+            }
+
+            return (string) $size;
         }
 
         public function add_settings_page()
@@ -155,14 +195,29 @@ if (!class_exists('Woo_Cart_Plugin')) {
                         <?php $this->text_field('empty_text', __('Empty cart text', 'woo-cart'), $settings['empty_text']); ?>
                         <?php $this->text_field('view_cart_text', __('View cart text', 'woo-cart'), $settings['view_cart_text']); ?>
                         <?php $this->text_field('checkout_text', __('Checkout text', 'woo-cart'), $settings['checkout_text']); ?>
+                        <?php $this->select_field('cart_icon_type', __('Floating cart icon', 'woo-cart'), $settings['cart_icon_type'], array(
+                            'bag' => __('Shopping bag', 'woo-cart'),
+                            'cart' => __('Cart', 'woo-cart'),
+                            'basket' => __('Basket', 'woo-cart'),
+                        )); ?>
                         <?php $this->color_field('icon_bg_color', __('Floating icon background', 'woo-cart'), $settings['icon_bg_color']); ?>
                         <?php $this->color_field('icon_text_color', __('Floating icon color', 'woo-cart'), $settings['icon_text_color']); ?>
                         <?php $this->color_field('badge_bg_color', __('Cart count badge color', 'woo-cart'), $settings['badge_bg_color']); ?>
                         <?php $this->color_field('drawer_bg_color', __('Drawer background color', 'woo-cart'), $settings['drawer_bg_color']); ?>
                         <?php $this->color_field('drawer_text_color', __('Drawer text color', 'woo-cart'), $settings['drawer_text_color']); ?>
+                        <?php $this->color_field('close_icon_color', __('Close icon color', 'woo-cart'), $settings['close_icon_color']); ?>
+                        <?php $this->color_field('close_icon_hover_color', __('Close icon hover color', 'woo-cart'), $settings['close_icon_hover_color']); ?>
+                        <?php $this->color_field('close_icon_hover_bg_color', __('Close icon hover background', 'woo-cart'), $settings['close_icon_hover_bg_color']); ?>
                         <?php $this->color_field('button_bg_color', __('Button background color', 'woo-cart'), $settings['button_bg_color']); ?>
                         <?php $this->color_field('button_text_color', __('Button text color', 'woo-cart'), $settings['button_text_color']); ?>
                         <?php $this->color_field('overlay_color', __('Overlay color', 'woo-cart'), $settings['overlay_color']); ?>
+                        <?php $this->number_field('drawer_title_font_size', __('Drawer title font size', 'woo-cart'), $settings['drawer_title_font_size'], 10, 36); ?>
+                        <?php $this->number_field('product_title_font_size', __('Product title font size', 'woo-cart'), $settings['product_title_font_size'], 10, 30); ?>
+                        <?php $this->number_field('price_font_size', __('Price font size', 'woo-cart'), $settings['price_font_size'], 10, 30); ?>
+                        <?php $this->number_field('quantity_font_size', __('Quantity font size', 'woo-cart'), $settings['quantity_font_size'], 10, 24); ?>
+                        <?php $this->number_field('button_font_size', __('Button font size', 'woo-cart'), $settings['button_font_size'], 10, 28); ?>
+                        <?php $this->number_field('count_font_size', __('Count badge font size', 'woo-cart'), $settings['count_font_size'], 9, 22); ?>
+                        <?php $this->number_field('empty_font_size', __('Empty message font size', 'woo-cart'), $settings['empty_font_size'], 10, 28); ?>
                     </table>
 
                     <?php submit_button(__('Save Changes', 'woo-cart')); ?>
@@ -205,6 +260,26 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <?php
         }
 
+        private function select_field($key, $label, $value, $options)
+        {
+            ?>
+            <tr>
+                <th scope="row">
+                    <label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label>
+                </th>
+                <td>
+                    <select id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>">
+                        <?php foreach ($options as $option_value => $option_label) : ?>
+                            <option value="<?php echo esc_attr($option_value); ?>" <?php selected($value, $option_value); ?>>
+                                <?php echo esc_html($option_label); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
+            </tr>
+            <?php
+        }
+
         private function color_field($key, $label, $value)
         {
             ?>
@@ -214,6 +289,20 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 </th>
                 <td>
                     <input type="color" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>">
+                </td>
+            </tr>
+            <?php
+        }
+
+        private function number_field($key, $label, $value, $min, $max)
+        {
+            ?>
+            <tr>
+                <th scope="row">
+                    <label for="woo-cart-<?php echo esc_attr($key); ?>"><?php echo esc_html($label); ?></label>
+                </th>
+                <td>
+                    <input type="number" id="woo-cart-<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($this->field_name($key)); ?>" value="<?php echo esc_attr($value); ?>" min="<?php echo esc_attr($min); ?>" max="<?php echo esc_attr($max); ?>"> px
                 </td>
             </tr>
             <?php
@@ -289,7 +378,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     box-shadow: 0 8px 14px rgba(17, 24, 39, 0.18);
                     color: #ffffff;
                     display: flex;
-                    font-size: 12px;
+                    font-size: <?php echo absint($settings['count_font_size']); ?>px;
                     font-weight: 800;
                     height: 24px;
                     justify-content: center;
@@ -367,7 +456,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-title {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
-                    font-size: 16px;
+                    font-size: <?php echo absint($settings['drawer_title_font_size']); ?>px;
                     font-weight: 800;
                     line-height: 1.2;
                     margin: 0;
@@ -379,7 +468,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     border-radius: 999px;
                     color: #ffffff;
                     display: inline-flex;
-                    font-size: 11px;
+                    font-size: <?php echo absint($settings['count_font_size']); ?>px;
                     font-weight: 800;
                     height: 22px;
                     justify-content: center;
@@ -392,7 +481,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     background: #ffffff;
                     border: 1px solid rgba(17, 24, 39, 0.08);
                     border-radius: 999px;
-                    color: <?php echo esc_html($settings['drawer_text_color']); ?>;
+                    color: <?php echo esc_html($settings['close_icon_color']); ?>;
                     cursor: pointer;
                     display: flex;
                     height: 38px;
@@ -404,7 +493,8 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
                 .woo-cart-drawer-close:hover,
                 .woo-cart-drawer-close:focus {
-                    background: #f4f4f1;
+                    background: <?php echo esc_html($settings['close_icon_hover_bg_color']); ?>;
+                    color: <?php echo esc_html($settings['close_icon_hover_color']); ?>;
                     outline: none;
                 }
 
@@ -459,7 +549,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-item-title {
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
                     display: block;
-                    font-size: 14px;
+                    font-size: <?php echo absint($settings['product_title_font_size']); ?>px;
                     font-weight: 800;
                     line-height: 1.35;
                     text-decoration: none;
@@ -485,7 +575,6 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     border-radius: 999px;
                     color: #111111;
                     display: inline-flex;
-                    font-size: 13px;
                     font-weight: 800;
                     height: 28px;
                     justify-content: center;
@@ -494,6 +583,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-qty {
                     min-width: 38px;
                     padding: 0 12px;
+                    font-size: <?php echo absint($settings['quantity_font_size']); ?>px;
                 }
 
                 .woo-cart-qty-button {
@@ -501,6 +591,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     padding: 0;
                     transition: background-color 160ms ease;
                     width: 28px;
+                    font-size: <?php echo absint($settings['quantity_font_size']); ?>px;
                 }
 
                 .woo-cart-qty-button:hover,
@@ -512,7 +603,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-item-price {
                     align-self: end;
                     color: <?php echo esc_html($settings['drawer_text_color']); ?>;
-                    font-size: 14px;
+                    font-size: <?php echo absint($settings['price_font_size']); ?>px;
                     font-weight: 900;
                     justify-self: end;
                     white-space: nowrap;
@@ -552,7 +643,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 .woo-cart-drawer-total {
                     align-items: center;
                     display: flex;
-                    font-size: 16px;
+                    font-size: <?php echo absint($settings['price_font_size']); ?>px;
                     justify-content: space-between;
                     margin: 0;
                 }
@@ -569,7 +660,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     border-radius: 999px;
                     color: <?php echo esc_html($settings['button_text_color']); ?>;
                     display: block;
-                    font-size: 14px;
+                    font-size: <?php echo absint($settings['button_font_size']); ?>px;
                     font-weight: 800;
                     min-height: 48px;
                     padding: 15px 18px;
@@ -599,6 +690,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
                     border-radius: 18px;
                     padding: 34px 22px;
                     text-align: center;
+                    font-size: <?php echo absint($settings['empty_font_size']); ?>px;
                 }
 
                 .woo-cart-drawer-empty p {
@@ -662,6 +754,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
 
         private function floating_button_markup()
         {
+            $settings = $this->settings();
             $count = $this->cart_count();
             $label = sprintf(
                 _n('%d item in cart', '%d items in cart', $count, 'woo-cart'),
@@ -672,11 +765,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
             ?>
             <button class="woo-cart-floating-button" type="button" aria-label="<?php echo esc_attr($label); ?>" aria-controls="woo-cart-drawer" aria-expanded="false">
                 <span class="woo-cart-floating-count"><?php echo esc_html($count); ?></span>
-                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
-                    <path d="M7 8.25h10l-.7 8.3a2 2 0 0 1-2 1.83H9.7a2 2 0 0 1-2-1.83L7 8.25Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/>
-                    <path d="M9.25 8.25a2.75 2.75 0 0 1 5.5 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-                    <path d="M10 12h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-                </svg>
+                <?php echo $this->cart_icon_svg($settings['cart_icon_type']); ?>
             </button>
             <?php
 
@@ -693,10 +782,7 @@ if (!class_exists('Woo_Cart_Plugin')) {
             <aside id="woo-cart-drawer" class="woo-cart-drawer" aria-hidden="true">
                 <div class="woo-cart-drawer-header">
                     <div class="woo-cart-drawer-heading">
-                        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none">
-                            <path d="M6.5 8.5h11l-.75 8.25a2 2 0 0 1-1.99 1.81H9.24a2 2 0 0 1-1.99-1.81L6.5 8.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                            <path d="M9 8.5a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
+                        <?php echo $this->cart_icon_svg($settings['cart_icon_type']); ?>
                         <h2 class="woo-cart-drawer-title"><?php echo esc_html($settings['drawer_title']); ?></h2>
                         <?php echo $this->cart_count_markup(); ?>
                     </div>
@@ -777,13 +863,13 @@ if (!class_exists('Woo_Cart_Plugin')) {
                 <div class="woo-cart-item-main">
                     <a class="woo-cart-item-title" href="<?php echo esc_url($product_url); ?>">
                         <?php echo esc_html($product_name); ?>
-                                    </a>
-                                    <div class="woo-cart-item-meta">
-                                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="minus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Decrease quantity', 'woo-cart'); ?>">-</button>
-                                        <span class="woo-cart-qty"><?php echo esc_html($cart_item['quantity']); ?></span>
-                                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="plus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Increase quantity', 'woo-cart'); ?>">+</button>
-                                    </div>
-                                </div>
+                    </a>
+                    <div class="woo-cart-item-meta">
+                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="minus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Decrease quantity', 'woo-cart'); ?>">-</button>
+                        <span class="woo-cart-qty"><?php echo esc_html($cart_item['quantity']); ?></span>
+                        <button class="woo-cart-qty-button" type="button" data-woo-cart-qty="plus" data-cart-item-key="<?php echo esc_attr($cart_item_key); ?>" aria-label="<?php esc_attr_e('Increase quantity', 'woo-cart'); ?>">+</button>
+                    </div>
+                </div>
 
                 <div class="woo-cart-item-price"><?php echo wp_kses_post($line_price); ?></div>
 
@@ -822,6 +908,19 @@ if (!class_exists('Woo_Cart_Plugin')) {
         private function cart_count_markup()
         {
             return '<span class="woo-cart-drawer-count">' . esc_html($this->cart_count()) . '</span>';
+        }
+
+        private function cart_icon_svg($type)
+        {
+            if ($type === 'cart') {
+                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M4 5h2l1.6 9.2a2 2 0 0 0 2 1.66h6.45a2 2 0 0 0 1.94-1.52L19.2 9H7.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20h.01M17 20h.01" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg>';
+            }
+
+            if ($type === 'basket') {
+                return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M5.2 10h13.6l-1.2 7.1a2 2 0 0 1-1.98 1.67H8.38A2 2 0 0 1 6.4 17.1L5.2 10Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9 10 12 5l3 5M8.5 13.5h7" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+            }
+
+            return '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none"><path d="M7 8.25h10l-.7 8.3a2 2 0 0 1-2 1.83H9.7a2 2 0 0 1-2-1.83L7 8.25Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M9.25 8.25a2.75 2.75 0 0 1 5.5 0" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M10 12h4" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
         }
 
         public function ajax_update_quantity()
